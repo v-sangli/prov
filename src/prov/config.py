@@ -3,6 +3,7 @@
 Machine config: `$PROV_CONFIG` or `~/.config/prov/config.toml`:
     registry = "~/registry"        # registry repo
     store_root = "~/store"
+    catalog = "~/.cache/prov/catalog.duckdb"   # optional; rebuilt from the registry
 
 Project config: `prov.toml`, found by walking up from the working directory:
     project = "cube-grasp"
@@ -23,6 +24,7 @@ class ConfigError(Exception):
 class MachineConfig:
     registry: Path
     store_root: Path
+    catalog: Path
 
 
 @dataclass(frozen=True)
@@ -41,6 +43,7 @@ def load_machine() -> MachineConfig:
         return MachineConfig(
             registry=Path(data["registry"]).expanduser(),
             store_root=Path(data["store_root"]).expanduser(),
+            catalog=Path(data.get("catalog", "~/.cache/prov/catalog.duckdb")).expanduser(),
         )
     except KeyError as exc:
         raise ConfigError(f"{path}: missing {exc}") from None

@@ -10,6 +10,18 @@
 
     prov show <id>
         Print a run or artifact record (and an artifact's store path).
+
+    prov ingest lerobot <path> [--source-map F.jsonl] [--calib calib_ID ...] [--meta k=v] [--copy]
+        Publish a LeRobot folder as a session and register one ep_ ID per episode.
+
+    prov annotate <ep_id> key=value [key=value ...]
+        Label an episode (outcome, failure_type, tags, note, ...); the latest value wins.
+
+    prov catalog rebuild
+        Rebuild the DuckDB catalog from the registry.
+
+    prov q "<sql>"
+        Query the catalog (rebuilt first if the registry changed). Tab-separated, with a header.
 """
 
 import argparse
@@ -23,7 +35,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from prov import config, gitsnap, registry, store
+from prov import catalog, config, episodes, gitsnap, registry, store
 from prov.ids import kind_of, new_id
 from prov.records import Env, RunRecord
 
@@ -112,6 +124,35 @@ def cmd_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ingest(args: argparse.Namespace) -> int:
+    session, eps = episodes.ingest_lerobot(
+        Path(args.path), source_map=Path(args.source_map) if args.source_map else None,
+        calibrations=args.calib, meta=_pairs(args.meta), copy=args.copy)
+    print(f"{session.id}\t{len(eps)} episodes")
+    return 0
+
+
+def cmd_annotate(args: argparse.Namespace) -> int:
+    if not args.labels:
+        raise config.ConfigError("give at least one key=value")
+    episodes.annotate(args.episode, _pairs(args.labels))
+    return 0
+
+
+def cmd_catalog(args: argparse.Namespace) -> int:
+    print(catalog.rebuild())
+    return 0
+
+
+def cmd_q(args: argparse.Namespace) -> int:
+    with catalog.connect() as con:
+        cur = con.execute(args.sql)
+        print("\t".join(d[0] for d in cur.description))
+        for row in cur.fetchall():
+            print("\t".join("" if v is None else str(v) for v in row))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="prov")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -127,11 +168,26 @@ def main(argv: list[str] | None = None) -> int:
     pub.add_argument("--copy", action="store_true", help="copy instead of move")
     show = sub.add_parser("show", help="print a run or artifact record")
     show.add_argument("id")
+    ing = sub.add_parser("ingest", help="register a recording session and its episodes")
+    ing.add_argument("format", choices=["lerobot"])
+    ing.add_argument("path")
+    ing.add_argument("--source-map", help="JSONL: episode_index -> MCAP path/raw ID/time range")
+    ing.add_argument("--calib", action="append", default=[], metavar="CALIB_ID")
+    ing.add_argument("--meta", action="append", default=[], metavar="KEY=VALUE")
+    ing.add_argument("--copy", action="store_true", help="copy instead of move")
+    ann = sub.add_parser("annotate", help="label an episode")
+    ann.add_argument("episode")
+    ann.add_argument("labels", nargs="*", metavar="KEY=VALUE")
+    cat = sub.add_parser("catalog", help="catalog maintenance")
+    cat.add_argument("action", choices=["rebuild"])
+    q = sub.add_parser("q", help="query the catalog with SQL")
+    q.add_argument("sql")
     args = parser.parse_args(argv)
-    handlers = {"run": cmd_run, "publish": cmd_publish, "show": cmd_show}
+    handlers = {"run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
+                "annotate": cmd_annotate, "catalog": cmd_catalog, "q": cmd_q}
     try:
         return handlers[args.cmd](args)
-    except (config.ConfigError, gitsnap.SnapshotError, store.StoreError, ValueError) as exc:
+    except (config.ConfigError, gitsnap.SnapshotError, store.StoreError, ValueError, catalog.duckdb.Error) as exc:
         print(f"prov: {exc}", file=sys.stderr)
         return 2
 

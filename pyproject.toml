@@ -3,7 +3,7 @@ name = "prov"
 version = "0.1.0"
 description = "Provenance records, IDs and code snapshots for research runs"
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2.7", "pyyaml>=6"]
+dependencies = ["pydantic>=2.7", "pyyaml>=6", "duckdb>=1.1"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]

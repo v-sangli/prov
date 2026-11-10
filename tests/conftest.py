@@ -42,6 +42,7 @@ def registry(tmp_path: Path, monkeypatch) -> Path:
     reg.mkdir()
     git(reg, "init", "-q", "-b", "main")
     cfg = tmp_path / "config.toml"
-    cfg.write_text(f'registry = "{reg}"\nstore_root = "{tmp_path / "store"}"\n')
+    cfg.write_text(f'registry = "{reg}"\nstore_root = "{tmp_path / "store"}"\n'
+                   f'catalog = "{tmp_path / "catalog.duckdb"}"\n')
     monkeypatch.setenv("PROV_CONFIG", str(cfg))
     return reg
