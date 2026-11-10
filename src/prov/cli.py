@@ -30,9 +30,13 @@
     prov alias set <kind:name/version> <ID>        a version: set once, never changes
     prov alias label <kind:name@label> <kind:name/version>   move a label
     prov alias show <ID or alias>                   print what it resolves to
+
+    prov trace <ID or alias>    upstream lineage: what it was made from, down to sessions and commits
+    prov uses <ID or alias>     downstream: every run, artifact and dataset built on it
 """
 
 import argparse
+import json
 import os
 import platform
 import shutil
@@ -43,7 +47,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from prov import aliases, catalog, config, datasets, episodes, gitsnap, registry, store
+from prov import aliases, api, catalog, config, datasets, episodes, gitsnap, lineage, registry, store, wb
 from prov.ids import kind_of, new_id
 from prov.records import Env, RunRecord
 
@@ -93,19 +97,23 @@ def cmd_run(args: argparse.Namespace) -> int:
     print(f"prov: {run_id}", file=sys.stderr)
 
     with tempfile.TemporaryDirectory() as tmp:
-        inputs_file, outputs_file = Path(tmp) / "inputs", Path(tmp) / "outputs"
-        inputs_file.touch()
-        outputs_file.touch()
-        env = {**os.environ, "PROV_RUN_ID": run_id, store.INPUTS_ENV: str(inputs_file),
-               store.OUTPUTS_ENV: str(outputs_file)}
+        files = {k: Path(tmp) / k for k in ("inputs", "outputs", "summary", "wandb")}
+        for f in files.values():
+            f.touch()
+        env = {**os.environ, "PROV_RUN_ID": run_id, "PROV_PROJECT": project.project,
+               store.INPUTS_ENV: str(files["inputs"]), store.OUTPUTS_ENV: str(files["outputs"]),
+               api.SUMMARY_ENV: str(files["summary"]), wb.WANDB_ENV: str(files["wandb"])}
         try:
             rc = subprocess.run(command, env=env).returncode
         except FileNotFoundError:
             rc = 127
         except KeyboardInterrupt:
             rc = -2
-        record.inputs = list(dict.fromkeys(l for l in inputs_file.read_text().splitlines() if l))
-        record.outputs = [line for line in outputs_file.read_text().splitlines() if line]
+        record.inputs = list(dict.fromkeys(l for l in files["inputs"].read_text().splitlines() if l))
+        record.outputs = [line for line in files["outputs"].read_text().splitlines() if line]
+        for line in files["summary"].read_text().splitlines():
+            record.summary.update(json.loads(line))
+        record.wandb = files["wandb"].read_text().strip() or None
 
     record.finished = datetime.now(timezone.utc)
     record.exit_code = rc
@@ -186,6 +194,14 @@ def cmd_alias(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_lineage(args: argparse.Namespace) -> int:
+    walk = lineage.trace if args.cmd == "trace" else lineage.uses
+    arrow = "<- " if args.cmd == "trace" else "-> "
+    for depth, _, text in walk(args.ref):
+        print(("  " * (depth - 1) + arrow if depth else "") + text)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="prov")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -231,10 +247,12 @@ def main(argv: list[str] | None = None) -> int:
     al.add_argument("action", choices=["set", "label", "show"])
     al.add_argument("ref")
     al.add_argument("target", nargs="?")
+    for name, help_ in (("trace", "upstream lineage"), ("uses", "downstream lineage")):
+        sub.add_parser(name, help=help_).add_argument("ref")
     args = parser.parse_args(argv)
     if args.cmd == "alias" and args.action != "show" and not args.target:
         parser.error(f"alias {args.action} needs a target")
-    handlers = {"dataset": cmd_dataset, "alias": cmd_alias, "run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
+    handlers = {"trace": cmd_lineage, "uses": cmd_lineage, "dataset": cmd_dataset, "alias": cmd_alias, "run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
                 "annotate": cmd_annotate, "catalog": cmd_catalog, "q": cmd_q}
     try:
         return handlers[args.cmd](args)

@@ -116,4 +116,6 @@ def publish(path: Path, kind: str, meta: dict[str, Any] | None = None, copy: boo
     if run_id and os.environ.get(OUTPUTS_ENV):
         with open(os.environ[OUTPUTS_ENV], "a") as f:
             f.write(id_ + "\n")
+    from prov import wb                     # late import: wb imports store
+    wb.on_publish(record)
     return record
