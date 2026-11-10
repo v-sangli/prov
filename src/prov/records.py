@@ -92,7 +92,7 @@ class Annotation(_Record):
 class ArtifactRecord(_Record):
     id: str
     kind: str
-    uri: str                       # store://<relative path>
+    uri: str | None = None         # store://<relative path>; None for records without bytes (datasets)
     created: datetime
     source: str | None = None      # where it was before publishing
     produced_by: str | None = None # run ID

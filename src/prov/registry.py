@@ -22,12 +22,12 @@ def write(registry: Path, rel: str, text: str) -> Path:
     return path
 
 
-def commit(registry: Path, path: Path, message: str) -> None:
-    """Commit one file in the registry repo; no-op if the registry is not a git repo."""
+def commit(registry: Path, paths: Path | list[Path], message: str) -> None:
+    """Commit these files in the registry repo; no-op if the registry is not a git repo."""
     if not (registry / ".git").exists():
         return
     env = {**os.environ, **IDENTITY}
-    rel = str(path.relative_to(registry))
-    subprocess.run(["git", "-C", str(registry), "add", "--", rel], check=True, env=env)
-    subprocess.run(["git", "-C", str(registry), "commit", "-q", "-m", message, "--", rel],
+    rels = [str(p.relative_to(registry)) for p in ([paths] if isinstance(paths, Path) else paths)]
+    subprocess.run(["git", "-C", str(registry), "add", "--", *rels], check=True, env=env)
+    subprocess.run(["git", "-C", str(registry), "commit", "-q", "-m", message, "--", *rels],
                    check=True, env=env, capture_output=True)

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from prov import config, registry
+from prov import aliases, config, registry
 from prov.ids import kind_of, new_id
 from prov.records import ArtifactRecord
 
@@ -25,6 +25,7 @@ KIND_DIRS = {
 }
 MIN_FREE_BYTES = 50 * 1024**3
 OUTPUTS_ENV = "PROV_RUN_OUTPUTS"   # set by `prov run`: file the child appends published IDs to
+INPUTS_ENV = "PROV_RUN_INPUTS"     # set by `prov run`: file the child appends loaded IDs to
 
 
 class StoreError(Exception):
@@ -66,8 +67,17 @@ def warn_if_low_space(store_root: Path) -> None:
         print(f"prov: warning: only {free / 1024**3:.0f} GB free on the store disk", file=sys.stderr)
 
 
-def publish(path: Path, kind: str, meta: dict[str, Any] | None = None, copy: bool = False) -> ArtifactRecord:
-    """Move (or copy) `path` into the store under a new ID, make it read-only, record it."""
+def publish(path: Path, kind: str, meta: dict[str, Any] | None = None, copy: bool = False,
+            alias: str | None = None) -> ArtifactRecord:
+    """Move (or copy) `path` into the store under a new ID, make it read-only, record it.
+
+    `alias` (`kind:name/version`) is checked before anything moves and set after."""
+    if alias:
+        akind, aname, aversion, _ = aliases.parse(alias)
+        if aversion is None or aliases.KINDS[akind] != kind:
+            raise StoreError(f"--alias {alias!r} must be a numbered version naming a {kind}")
+        if aversion in aliases.versions(akind, aname):
+            raise StoreError(f"{alias} already exists; versions never change")
     if kind not in KIND_DIRS:
         raise StoreError(f"kind {kind!r} can't be published; one of {sorted(KIND_DIRS)}")
     machine = config.load_machine()
@@ -101,6 +111,8 @@ def publish(path: Path, kind: str, meta: dict[str, Any] | None = None, copy: boo
 
     rec_path = registry.write(machine.registry, record_rel(kind, id_), record.to_yaml())
     registry.commit(machine.registry, rec_path, f"publish {id_} ({kind})")
+    if alias:
+        aliases.set_version(alias, id_, machine.registry)
     if run_id and os.environ.get(OUTPUTS_ENV):
         with open(os.environ[OUTPUTS_ENV], "a") as f:
             f.write(id_ + "\n")

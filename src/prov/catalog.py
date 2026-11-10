@@ -11,6 +11,9 @@ Tables:
     episodes      one row per episode, with its source (teleop / MCAP path and time range)
     annotation_log  every annotation ever made
     annotations   view: latest value per (episode, key)
+    dataset_members (dataset ID, alias, episode)
+    aliases       (ref `kind:name/version`, kind, name, version, id)
+    alias_labels  (ref `kind:name@label`, kind, name, label, version)
     catalog_meta  registry HEAD the catalog was built from
 
 All timestamps are UTC.
@@ -26,7 +29,7 @@ from pathlib import Path
 import duckdb
 import yaml
 
-from prov import config, store
+from prov import aliases, config, store
 from prov.records import Annotation, ArtifactRecord, EpisodeRecord, RunRecord
 
 SCHEMA = """
@@ -48,6 +51,9 @@ CREATE TABLE annotation_log (episode VARCHAR, key VARCHAR, value VARCHAR, time T
 CREATE VIEW annotations AS
     SELECT episode, key, arg_max(value, time) AS value, max(time) AS time
     FROM annotation_log GROUP BY episode, key;
+CREATE TABLE dataset_members (dataset VARCHAR, alias VARCHAR, episode VARCHAR);
+CREATE TABLE aliases (ref VARCHAR PRIMARY KEY, kind VARCHAR, name VARCHAR, version VARCHAR, id VARCHAR);
+CREATE TABLE alias_labels (ref VARCHAR PRIMARY KEY, kind VARCHAR, name VARCHAR, label VARCHAR, version VARCHAR);
 CREATE TABLE catalog_meta (registry_head VARCHAR);
 """
 
@@ -99,7 +105,7 @@ def rebuild(machine: config.MachineConfig | None = None) -> Path:
 
     arts = [ArtifactRecord.model_validate(yaml.safe_load(p.read_text()))
             for p in sorted((reg / "records" / "artifacts").glob("*/*.yaml"))]
-    _insert(con, "artifacts", [(a.id, a.kind, a.uri, str(store.resolve(a.uri, machine.store_root)), _utc(a.created),
+    _insert(con, "artifacts", [(a.id, a.kind, a.uri, str(store.resolve(a.uri, machine.store_root)) if a.uri else None, _utc(a.created),
                                 a.source, a.produced_by, json.dumps(a.meta, sort_keys=True)) for a in arts])
     eps = _lines((reg / "records" / "episodes").glob("*.jsonl"), EpisodeRecord)
     _insert(con, "episodes", [(e.id, e.session, e.episode_index, e.length, e.fps, e.duration_s, e.tasks,
@@ -107,6 +113,11 @@ def rebuild(machine: config.MachineConfig | None = None) -> Path:
                                e.calibrations) for e in eps])
     notes = _lines((reg / "records" / "annotations").glob("*.jsonl"), Annotation)
     _insert(con, "annotation_log", [(a.episode, a.key, a.value, _utc(a.time)) for a in notes])
+    _insert(con, "dataset_members", [(a.id, a.meta.get("alias"), e) for a in arts if a.kind == "dataset"
+                                     for e in (reg / f"datasets/{a.id}.txt").read_text().split()])
+    vrows, lrows = aliases.all_aliases(reg)
+    _insert(con, "aliases", vrows)
+    _insert(con, "alias_labels", lrows)
 
     con.execute("INSERT INTO catalog_meta VALUES (?)", [_registry_head(reg)])
     con.close()
