@@ -11,6 +11,11 @@ def test_format_and_kind():
     assert kind_of(i) == "checkpoint"
 
 
+def test_calibration_kind():
+    i = new_id("calibration")
+    assert i.startswith("calib_") and kind_of(i) == "calibration"
+
+
 def test_unique():
     assert len({new_id("run") for _ in range(10_000)}) == 10_000
 

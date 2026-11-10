@@ -11,12 +11,9 @@ import tempfile
 from pathlib import Path
 
 from prov.records import CodeState, ExcludedFile
+from prov.registry import IDENTITY as _IDENTITY
 
 MAX_UNTRACKED_BYTES = 5 * 1024 * 1024
-_IDENTITY = {
-    "GIT_AUTHOR_NAME": "prov", "GIT_AUTHOR_EMAIL": "prov@localhost",
-    "GIT_COMMITTER_NAME": "prov", "GIT_COMMITTER_EMAIL": "prov@localhost",
-}
 
 
 class SnapshotError(Exception):

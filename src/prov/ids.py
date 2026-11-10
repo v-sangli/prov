@@ -15,6 +15,7 @@ PREFIXES = {
     "figure": "fig",
     "video": "vid",
     "raw": "raw",
+    "calibration": "calib",
 }
 
 _CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"

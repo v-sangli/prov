@@ -66,5 +66,7 @@ class ArtifactRecord(_Record):
     id: str
     kind: str
     uri: str                       # store://<relative path>
+    created: datetime
+    source: str | None = None      # where it was before publishing
     produced_by: str | None = None # run ID
     meta: dict[str, Any] = {}

@@ -1,10 +1,15 @@
 """`prov` command line.
 
     prov run [--kind K] [--tag key=value ...] [--notes TEXT] -- <command> [args...]
+        Snapshot every repo in prov.toml, run the command with PROV_RUN_ID set, write
+        <registry>/records/runs/<run_id>.yaml (status `running` at start, final at exit), commit it,
+        and exit with the command's exit code. Artifacts published by the command become its outputs.
 
-Snapshots every repo in prov.toml, runs the command with PROV_RUN_ID set, writes
-<registry>/records/runs/<run_id>.yaml (status `running` at start, final at exit), commits it in the
-registry repo, and exits with the command's exit code.
+    prov publish <path> --kind K [--meta key=value ...] [--copy]
+        Move (or copy) a file or folder into the store under a new ID, make it read-only, record it.
+
+    prov show <id>
+        Print a run or artifact record (and an artifact's store path).
 """
 
 import argparse
@@ -14,11 +19,12 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from prov import config, gitsnap
-from prov.ids import new_id
+from prov import config, gitsnap, registry, store
+from prov.ids import kind_of, new_id
 from prov.records import Env, RunRecord
 
 KINDS = ["collect", "export", "train", "eval", "analysis", "other"]
@@ -33,23 +39,11 @@ def _env() -> Env:
     return Env(python=platform.python_version(), platform=platform.platform(), gpu=gpus)
 
 
-def _write(record: RunRecord, registry: Path) -> Path:
-    path = registry / "records" / "runs" / f"{record.id}.yaml"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".yaml.tmp")
-    tmp.write_text(record.to_yaml())
-    tmp.replace(path)
-    return path
-
-
-def _commit_registry(registry: Path, path: Path, message: str) -> None:
-    if not (registry / ".git").exists():
-        return
-    env = {**os.environ, **gitsnap._IDENTITY}
-    rel = str(path.relative_to(registry))
-    subprocess.run(["git", "-C", str(registry), "add", "--", rel], check=True, env=env)
-    subprocess.run(["git", "-C", str(registry), "commit", "-q", "-m", message, "--", rel],
-                   check=True, env=env, capture_output=True)
+def _pairs(items: list[str]) -> dict[str, str]:
+    for item in items:
+        if "=" not in item:
+            raise config.ConfigError(f"expected key=value, got {item!r}")
+    return dict(item.split("=", 1) for item in items)
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -59,16 +53,18 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 2
     machine = config.load_machine()
     project = config.load_project(Path.cwd())
-    tags = dict(t.split("=", 1) for t in args.tag)
+    tags = _pairs(args.tag)
+    store.warn_if_low_space(machine.store_root)
 
     run_id = new_id("run")
+    rel = f"records/runs/{run_id}.yaml"
     code = [gitsnap.snapshot(repo, run_id) for repo in project.repos]
     record = RunRecord(
         id=run_id, kind=args.kind, project=project.project,
         started=datetime.now(timezone.utc), status="running", host=socket.gethostname(),
         cwd=str(Path.cwd()), command=command, code=code, env=_env(), tags=tags, notes=args.notes,
     )
-    path = _write(record, machine.registry)
+    registry.write(machine.registry, rel, record.to_yaml())
     for c in code:
         if c.dirty:
             print(f"prov: {c.repo} is dirty; snapshot {c.snapshot[:10]} at {c.ref}", file=sys.stderr)
@@ -76,19 +72,44 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(f"prov: {c.repo}: {c.ref} not pushed (no origin or push failed)", file=sys.stderr)
     print(f"prov: {run_id}", file=sys.stderr)
 
-    try:
-        rc = subprocess.run(command, env={**os.environ, "PROV_RUN_ID": run_id}).returncode
-    except FileNotFoundError:
-        rc = 127
-    except KeyboardInterrupt:
-        rc = -2
+    with tempfile.TemporaryDirectory() as tmp:
+        outputs_file = Path(tmp) / "outputs"
+        outputs_file.touch()
+        env = {**os.environ, "PROV_RUN_ID": run_id, store.OUTPUTS_ENV: str(outputs_file)}
+        try:
+            rc = subprocess.run(command, env=env).returncode
+        except FileNotFoundError:
+            rc = 127
+        except KeyboardInterrupt:
+            rc = -2
+        record.outputs = [line for line in outputs_file.read_text().splitlines() if line]
 
     record.finished = datetime.now(timezone.utc)
     record.exit_code = rc
     record.status = "ok" if rc == 0 else ("killed" if rc < 0 else "failed")
-    path = _write(record, machine.registry)
-    _commit_registry(machine.registry, path, f"run {run_id} {record.status}")
+    path = registry.write(machine.registry, rel, record.to_yaml())
+    registry.commit(machine.registry, path, f"run {run_id} {record.status}")
     return rc if rc >= 0 else 128 - rc
+
+
+def cmd_publish(args: argparse.Namespace) -> int:
+    record = store.publish(Path(args.path), args.kind, meta=_pairs(args.meta), copy=args.copy)
+    print(record.id)
+    return 0
+
+
+def cmd_show(args: argparse.Namespace) -> int:
+    machine = config.load_machine()
+    if kind_of(args.id) == "run":
+        path = machine.registry / "records" / "runs" / f"{args.id}.yaml"
+        if not path.is_file():
+            raise store.StoreError(f"no record for {args.id}")
+        print(path.read_text(), end="")
+        return 0
+    record = store.load(args.id, machine.registry)
+    print(record.to_yaml(), end="")
+    print(f"# path: {store.resolve(record.uri, machine.store_root)}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -99,14 +120,20 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--tag", action="append", default=[], metavar="KEY=VALUE")
     run.add_argument("--notes")
     run.add_argument("command", nargs=argparse.REMAINDER)
+    pub = sub.add_parser("publish", help="move a file or folder into the store and record it")
+    pub.add_argument("path")
+    pub.add_argument("--kind", required=True, choices=sorted(store.KIND_DIRS))
+    pub.add_argument("--meta", action="append", default=[], metavar="KEY=VALUE")
+    pub.add_argument("--copy", action="store_true", help="copy instead of move")
+    show = sub.add_parser("show", help="print a run or artifact record")
+    show.add_argument("id")
     args = parser.parse_args(argv)
+    handlers = {"run": cmd_run, "publish": cmd_publish, "show": cmd_show}
     try:
-        if args.cmd == "run":
-            return cmd_run(args)
-    except (config.ConfigError, gitsnap.SnapshotError) as exc:
+        return handlers[args.cmd](args)
+    except (config.ConfigError, gitsnap.SnapshotError, store.StoreError, ValueError) as exc:
         print(f"prov: {exc}", file=sys.stderr)
         return 2
-    return 0
 
 
 if __name__ == "__main__":
