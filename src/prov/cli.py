@@ -31,6 +31,14 @@
     prov alias label <kind:name@label> <kind:name/version>   move a label
     prov alias show <ID or alias>                   print what it resolves to
 
+    prov init <project>
+        Make the current repo a prov project: prov.toml, journal/ skeleton, journal/media link into
+        the store, agent skills linked into .claude/skills/. Never overwrites.
+
+    prov journal new <topic> [--continues <doc>]   start today's doc from the template
+    prov journal lint                              check frontmatter, IDs, images, links, NOW.md
+    prov journal index                             rebuild journal/INDEX.md (docs by date and status)
+
     prov rerun <run_id>
         Run the same command again on the recorded code snapshot (git worktrees), as a new run
         tagged rerun_of=<run_id>.
@@ -51,7 +59,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from prov import aliases, api, catalog, config, datasets, episodes, gitsnap, lineage, registry, rerun, store, wb
+from prov import aliases, api, catalog, config, datasets, episodes, gitsnap, journal, lineage, registry, rerun, store, wb
 from prov.ids import kind_of, new_id
 from prov.records import Env, RunRecord
 
@@ -198,6 +206,27 @@ def cmd_alias(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_init(args: argparse.Namespace) -> int:
+    made = journal.init_project(Path.cwd(), args.project)
+    print("\n".join(made) if made else "nothing to do: already set up")
+    return 0
+
+
+def cmd_journal(args: argparse.Namespace) -> int:
+    if args.action == "new":
+        if not args.topic:
+            raise journal.JournalError("journal new needs a topic")
+        print(journal.new_doc(args.topic, continues=args.continues))
+        return 0
+    root = journal.journal_root()
+    if args.action == "index":
+        print(journal.index(root))
+        return 0
+    problems = journal.lint(root)
+    print("\n".join(problems) if problems else "journal OK")
+    return 1 if problems else 0
+
+
 def cmd_rerun(args: argparse.Namespace) -> int:
     return rerun.rerun(args.run_id)
 
@@ -255,18 +284,23 @@ def main(argv: list[str] | None = None) -> int:
     al.add_argument("action", choices=["set", "label", "show"])
     al.add_argument("ref")
     al.add_argument("target", nargs="?")
+    sub.add_parser("init", help="make this repo a prov project").add_argument("project")
+    jr = sub.add_parser("journal", help="project journal")
+    jr.add_argument("action", choices=["new", "lint", "index"])
+    jr.add_argument("topic", nargs="?")
+    jr.add_argument("--continues", help="doc folder this one continues (relative to journal/)")
     sub.add_parser("rerun", help="re-run a recorded run on its code snapshot").add_argument("run_id")
     for name, help_ in (("trace", "upstream lineage"), ("uses", "downstream lineage")):
         sub.add_parser(name, help=help_).add_argument("ref")
     args = parser.parse_args(argv)
     if args.cmd == "alias" and args.action != "show" and not args.target:
         parser.error(f"alias {args.action} needs a target")
-    handlers = {"rerun": cmd_rerun, "trace": cmd_lineage, "uses": cmd_lineage, "dataset": cmd_dataset, "alias": cmd_alias, "run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
+    handlers = {"init": cmd_init, "journal": cmd_journal, "rerun": cmd_rerun, "trace": cmd_lineage, "uses": cmd_lineage, "dataset": cmd_dataset, "alias": cmd_alias, "run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
                 "annotate": cmd_annotate, "catalog": cmd_catalog, "q": cmd_q}
     try:
         return handlers[args.cmd](args)
     except (config.ConfigError, gitsnap.SnapshotError, store.StoreError, aliases.AliasError,
-            datasets.DatasetError, rerun.RerunError, ValueError, catalog.duckdb.Error) as exc:
+            datasets.DatasetError, rerun.RerunError, journal.JournalError, ValueError, catalog.duckdb.Error) as exc:
         print(f"prov: {exc}", file=sys.stderr)
         return 2
 
