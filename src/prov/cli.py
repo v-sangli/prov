@@ -31,6 +31,10 @@
     prov alias label <kind:name@label> <kind:name/version>   move a label
     prov alias show <ID or alias>                   print what it resolves to
 
+    prov rerun <run_id>
+        Run the same command again on the recorded code snapshot (git worktrees), as a new run
+        tagged rerun_of=<run_id>.
+
     prov trace <ID or alias>    upstream lineage: what it was made from, down to sessions and commits
     prov uses <ID or alias>     downstream: every run, artifact and dataset built on it
 """
@@ -47,7 +51,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from prov import aliases, api, catalog, config, datasets, episodes, gitsnap, lineage, registry, store, wb
+from prov import aliases, api, catalog, config, datasets, episodes, gitsnap, lineage, registry, rerun, store, wb
 from prov.ids import kind_of, new_id
 from prov.records import Env, RunRecord
 
@@ -194,6 +198,10 @@ def cmd_alias(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_rerun(args: argparse.Namespace) -> int:
+    return rerun.rerun(args.run_id)
+
+
 def cmd_lineage(args: argparse.Namespace) -> int:
     walk = lineage.trace if args.cmd == "trace" else lineage.uses
     arrow = "<- " if args.cmd == "trace" else "-> "
@@ -247,17 +255,18 @@ def main(argv: list[str] | None = None) -> int:
     al.add_argument("action", choices=["set", "label", "show"])
     al.add_argument("ref")
     al.add_argument("target", nargs="?")
+    sub.add_parser("rerun", help="re-run a recorded run on its code snapshot").add_argument("run_id")
     for name, help_ in (("trace", "upstream lineage"), ("uses", "downstream lineage")):
         sub.add_parser(name, help=help_).add_argument("ref")
     args = parser.parse_args(argv)
     if args.cmd == "alias" and args.action != "show" and not args.target:
         parser.error(f"alias {args.action} needs a target")
-    handlers = {"trace": cmd_lineage, "uses": cmd_lineage, "dataset": cmd_dataset, "alias": cmd_alias, "run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
+    handlers = {"rerun": cmd_rerun, "trace": cmd_lineage, "uses": cmd_lineage, "dataset": cmd_dataset, "alias": cmd_alias, "run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
                 "annotate": cmd_annotate, "catalog": cmd_catalog, "q": cmd_q}
     try:
         return handlers[args.cmd](args)
     except (config.ConfigError, gitsnap.SnapshotError, store.StoreError, aliases.AliasError,
-            datasets.DatasetError, ValueError, catalog.duckdb.Error) as exc:
+            datasets.DatasetError, rerun.RerunError, ValueError, catalog.duckdb.Error) as exc:
         print(f"prov: {exc}", file=sys.stderr)
         return 2
 
