@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from prov.ids import kind_of, new_id
+from prov.core.ids import kind_of, new_id
 
 
 def test_format_and_kind():

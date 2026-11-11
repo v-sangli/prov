@@ -6,8 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from prov import site
-from prov.journal import init_project, new_doc
+from prov.integrations.site import build as site
+from prov.integrations.site.server import make_handler
+from prov.journal.docs import new_doc
+from prov.journal.project import init_project
+from prov.wiring import context
 
 QUARTZ = Path(__file__).resolve().parents[2] / "tools" / "quartz"
 NODE = Path(__file__).resolve().parents[2] / "tools" / "node" / "bin"
@@ -23,7 +26,7 @@ def server(tmp_path):
     (media / "run_A").mkdir(parents=True)
     (media / "run_A" / "clip.mp4").write_bytes(bytes(range(256)) * 4)      # 1024 bytes
     (tmp_path / "secret.txt").write_text("no")
-    srv = ThreadingHTTPServer(("127.0.0.1", 0), site.make_handler(sites, media))
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(sites, media))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     yield srv.server_address[1]
     srv.shutdown()
@@ -73,19 +76,20 @@ def test_writes_are_refused(server):
 def test_build_journal_with_quartz(registry, tmp_path, monkeypatch):
     cfg = Path(os.environ["PROV_CONFIG"])
     cfg.write_text(cfg.read_text() + f'quartz = "{QUARTZ}"\nnode = "{NODE}"\nsites_dir = "{tmp_path / "sites"}"\n')
+    ctx = context()
     root = tmp_path / "proj"
     root.mkdir()
     monkeypatch.chdir(root)
-    init_project(root, "proj")
+    init_project(ctx, root, "proj")
     (tmp_path / "store" / "media" / "run_A").mkdir(parents=True)
     (tmp_path / "store" / "media" / "run_A" / "clip.mp4").write_bytes(b"0" * 5_000_000)
     doc = new_doc("first-look")
     doc.write_text(doc.read_text() + "\n![[media/run_A/clip.mp4]]\n")
 
-    out = site.build(root / "journal", "proj")
+    out = site.build(ctx, root / "journal", "proj")
     assert out == tmp_path / "sites" / "proj" and (out / "index.html").is_file()
     assert Path((out / site.SOURCE_FILE).read_text()) == (root / "journal").resolve()
     assert not list(out.rglob("*.mp4"))                                   # videos never copied
     page = next(p for p in out.rglob("README.html") if "first-look" in str(p))
     assert 'media/run_A/clip.mp4' in page.read_text()
-    assert site.rebuild_changed(tmp_path / "sites") == []                 # nothing changed since
+    assert site.rebuild_changed(ctx) == []                 # nothing changed since

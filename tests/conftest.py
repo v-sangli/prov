@@ -46,3 +46,10 @@ def registry(tmp_path: Path, monkeypatch) -> Path:
                    f'catalog = "{tmp_path / "catalog.duckdb"}"\n')
     monkeypatch.setenv("PROV_CONFIG", str(cfg))
     return reg
+
+
+@pytest.fixture
+def ctx(registry):
+    """The Context for the test registry (built-in extensions)."""
+    from prov.wiring import context
+    return context()

@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 
 from conftest import git
-from prov.gitsnap import SnapshotError, snapshot
+from prov.core.errors import SnapshotError
+from prov.runs.snapshot import snapshot
 
 
 def _state(repo: Path) -> dict:

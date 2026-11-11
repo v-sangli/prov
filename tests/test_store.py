@@ -6,8 +6,11 @@ import yaml
 
 from conftest import git
 from prov.cli import main
-from prov.records import ArtifactRecord, RunRecord
-from prov.store import StoreError, load, publish, resolve
+from prov.artifacts.publish import load, publish
+from prov.artifacts.schema import ArtifactRecord
+from prov.core.errors import StoreError
+from prov.runs.schema import RunRecord
+from prov.storage.store import resolve
 
 
 def _store(tmp_path: Path) -> Path:
@@ -22,22 +25,22 @@ def _session_dir(tmp_path: Path) -> Path:
     return d
 
 
-def test_publish_moves_folder_under_its_id(registry, tmp_path):
+def test_publish_moves_folder_under_its_id(registry, tmp_path, ctx):
     src = _session_dir(tmp_path)
-    rec = publish(src, "session", meta={"robot": "so101"})
+    rec = publish(ctx, src, "session", meta={"robot": "so101"})
 
-    dest = resolve(rec.uri, _store(tmp_path))
+    dest = resolve(ctx, rec.uri)
     assert rec.id.startswith("ses_") and rec.uri == f"store://sessions/{rec.id}"
     assert not src.exists()
     assert (dest / "data" / "file-000.parquet").read_bytes() == b"rows"
     assert rec.source == str(src) and rec.meta == {"robot": "so101"} and rec.produced_by is None
-    assert load(rec.id, registry) == rec
+    assert load(ctx, rec.id) == rec
     assert git(registry, "log", "-1", "--format=%s") == f"publish {rec.id} (session)"
     assert git(registry, "status", "--porcelain") == ""
 
 
-def test_published_folder_is_read_only(registry, tmp_path):
-    dest = resolve(publish(_session_dir(tmp_path), "session").uri, _store(tmp_path))
+def test_published_folder_is_read_only(registry, tmp_path, ctx):
+    dest = resolve(ctx, publish(ctx, _session_dir(tmp_path), "session").uri)
     with pytest.raises(PermissionError):
         (dest / "meta.json").write_text("changed")
     with pytest.raises(PermissionError):
@@ -47,44 +50,44 @@ def test_published_folder_is_read_only(registry, tmp_path):
     assert (dest / "meta.json").read_text() == "{}"
 
 
-def test_publish_single_file(registry, tmp_path):
+def test_publish_single_file(registry, tmp_path, ctx):
     fig = tmp_path / "closure.png"
     fig.write_bytes(b"png")
-    rec = publish(fig, "figure")
+    rec = publish(ctx, fig, "figure")
     assert rec.uri == f"store://figures/{rec.id}/closure.png"
-    assert resolve(rec.uri, _store(tmp_path)).read_bytes() == b"png" and not fig.exists()
+    assert resolve(ctx, rec.uri).read_bytes() == b"png" and not fig.exists()
 
 
-def test_copy_keeps_source(registry, tmp_path):
+def test_copy_keeps_source(registry, tmp_path, ctx):
     src = _session_dir(tmp_path)
-    rec = publish(src, "session", copy=True)
-    assert src.exists() and (resolve(rec.uri, _store(tmp_path)) / "meta.json").exists()
+    rec = publish(ctx, src, "session", copy=True)
+    assert src.exists() and (resolve(ctx, rec.uri) / "meta.json").exists()
 
 
-def test_checkpoint_gets_manifest(registry, tmp_path):
+def test_checkpoint_gets_manifest(registry, tmp_path, ctx):
     ckpt = tmp_path / "ckpt"
     ckpt.mkdir()
     (ckpt / "model.safetensors").write_bytes(b"w")
-    rec = publish(ckpt, "checkpoint", meta={"step": "30000"})
-    manifest = resolve(rec.uri, _store(tmp_path)) / "manifest.yaml"
+    rec = publish(ctx, ckpt, "checkpoint", meta={"step": "30000"})
+    manifest = resolve(ctx, rec.uri) / "manifest.yaml"
     assert ArtifactRecord.model_validate(yaml.safe_load(manifest.read_text())) == rec
 
 
 @pytest.mark.parametrize("kind", ["episode", "run", "nonsense"])
-def test_unpublishable_kinds(registry, tmp_path, kind):
+def test_unpublishable_kinds(registry, tmp_path, kind, ctx):
     with pytest.raises(StoreError):
-        publish(_session_dir(tmp_path), kind)
+        publish(ctx, _session_dir(tmp_path), kind)
 
 
-def test_missing_path(registry, tmp_path):
+def test_missing_path(registry, tmp_path, ctx):
     with pytest.raises(StoreError, match="does not exist"):
-        publish(tmp_path / "nope", "session")
+        publish(ctx, tmp_path / "nope", "session")
 
 
-def test_path_already_in_store(registry, tmp_path):
-    rec = publish(_session_dir(tmp_path), "session")
+def test_path_already_in_store(registry, tmp_path, ctx):
+    rec = publish(ctx, _session_dir(tmp_path), "session")
     with pytest.raises(StoreError, match="already inside the store"):
-        publish(resolve(rec.uri, _store(tmp_path)), "session")
+        publish(ctx, resolve(ctx, rec.uri), "session")
 
 
 def test_publish_inside_run_links_both_ways(repo, registry, monkeypatch, tmp_path):
@@ -93,7 +96,7 @@ def test_publish_inside_run_links_both_ways(repo, registry, monkeypatch, tmp_pat
     git(repo, "commit", "-q", "-m", "prov.toml")
     monkeypatch.chdir(repo)
     src = _session_dir(tmp_path)
-    code = f"from prov.store import publish; publish({str(src)!r}, 'session')"
+    code = f"import prov; prov.publish({str(src)!r}, 'session')"
 
     assert main(["run", "--kind", "collect", "--", sys.executable, "-c", code]) == 0
 

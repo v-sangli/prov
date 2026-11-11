@@ -1,8 +1,9 @@
-"""prov: provenance records, IDs and code snapshots for research runs."""
+"""prov: IDs, provenance records, a local store, datasets of episodes and the project journal.
 
-from prov.api import load, path, summary
-from prov.datasets import dataset_sessions, members
-from prov.store import publish
-from prov.wb import wandb_init
+Public API (inside or outside `prov run`): load, path, publish, summary, members,
+dataset_sessions, wandb_init, context; plotting in `prov.plot`. Package map: README.md.
+"""
 
-__all__ = ["load", "path", "publish", "summary", "members", "dataset_sessions", "wandb_init"]
+from prov.api import context, dataset_sessions, load, members, path, publish, summary, wandb_init
+
+__all__ = ["load", "path", "publish", "summary", "members", "dataset_sessions", "wandb_init", "context"]

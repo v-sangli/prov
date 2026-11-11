@@ -34,7 +34,7 @@ git clone --depth 1 --branch v4.5.2 https://github.com/jackyzha0/quartz.git quar
 (cd quartz && PATH=../node/bin:$PATH npm ci --no-audit --no-fund)
 ```
 
-`prov site build` writes `src/prov/templates/quartz.config.ts` into the checkout before building
+`prov site build` writes `src/prov/integrations/site/quartz.config.ts` into the checkout before building
 (no analytics, local fonts, `media/` ignored). Serve with `prov site serve --host tailscale`.
 
 ## A project
@@ -47,4 +47,33 @@ prov journal new <topic>; prov journal lint; prov journal index
 prov site build && prov site serve
 ```
 
-`prov --help` and `prov <command> --help` list everything.
+`prov --help` and `prov <command> --help` list everything; `prov -v ...` logs debug detail,
+`prov -q ...` only warnings.
+
+## Package map
+
+Layers, lowest first. A package imports only from its own layer's lower rungs (`tests/test_layers.py`
+enforces it); each `__init__.py` says what the package owns.
+
+| Layer | Package | Owns |
+| --- | --- | --- |
+| 0 | `prov.core` | errors, IDs, registry/store layout, record base, run env contract, Context, extension types, events, logging |
+| 1 | `prov.storage` | registry git writes, store bytes, DuckDB catalog engine |
+| 2 | `prov.runs` | run records, code snapshots, `prov run` lifecycle, rerun, run tables |
+| 2 | `prov.artifacts` | artifact records, publish / load, aliases, artifact tables |
+| 3 | `prov.episodes` | episode records, ingest formats (`formats/lerobot`), ingest, annotate, episode tables |
+| 4 | `prov.datasets` | freeze, split, members, dataset table |
+| 5 | `prov.lineage` | trace / uses |
+| 6 | `prov.journal` | `prov init`, docs, index, lint checks (`lint/`, one rule per module), templates, skills |
+| 6 | `prov.integrations` | W&B event subscriber, plot house style, Quartz site build / serve |
+| 7 | `prov.wiring` | the built-in extensions: catalog tables, ingest formats, lint checks, subscribers |
+| 8 | `prov.api`, `prov.plot` | the public Python API (`import prov`, `from prov import plot`) |
+| 9 | `prov.cli` | the command line, one module per command group |
+
+Library functions take a `Context` (`prov.context()`) first; the public API and the CLI build it.
+
+Extending: a new recording format is a module in `episodes/formats/` exposing an `IngestFormat`; a
+lint rule is a module in `journal/lint/` exposing a `LintCheck`; new catalog tables are a
+`CatalogTables`; a new integration subscribes to `artifact.published`, `artifact.loaded` or
+`run.summary`. Each is then one line in `wiring.py`. A CLI group is a module in `cli/` with
+`register`, listed in `cli/main.py`.

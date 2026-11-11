@@ -1,0 +1,25 @@
+"""Reading dataset versions: `<registry>/datasets/<ds_id>.txt`, one episode ID per line, sorted."""
+
+from prov.artifacts import aliases
+from prov.core import layout
+from prov.core.errors import DatasetError
+from prov.storage import catalog
+
+
+def members(ctx, ref: str) -> list[str]:
+    path = ctx.registry / layout.dataset_members(aliases.resolve(ctx, ref))
+    if not path.is_file():
+        raise DatasetError(f"{ref} is not a dataset")
+    return path.read_text().split()
+
+
+def dataset_sessions(ctx, ref: str) -> dict[str, list[int]]:
+    """{ses_id: [episode_index, ...]} for loading with LeRobot (repo_id = ses_id, root = store/sessions)."""
+    ids = members(ctx, ref)
+    with catalog.connect(ctx) as con:
+        rows = con.execute("SELECT session, episode_index FROM episodes WHERE list_contains(?, id) "
+                           "ORDER BY session, episode_index", [ids]).fetchall()
+    out: dict[str, list[int]] = {}
+    for ses, idx in rows:
+        out.setdefault(ses, []).append(idx)
+    return out

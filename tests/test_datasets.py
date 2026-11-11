@@ -4,21 +4,24 @@ from pathlib import Path
 import pytest
 
 from conftest import git
-from prov import aliases, catalog
-from prov.aliases import AliasError
+from prov.artifacts import aliases
+from prov.core.errors import AliasError, DatasetError, StoreError
+from prov.storage import catalog
 from prov.cli import main
-from prov.datasets import DatasetError, dataset_sessions, freeze, members
-from prov.episodes import annotate, ingest_lerobot
-from prov.records import RunRecord
-from prov.store import StoreError, publish
+from prov.artifacts.publish import publish
+from prov.datasets.freeze import freeze
+from prov.datasets.members import dataset_sessions, members
+from prov.episodes.annotate import annotate
+from prov.episodes.ingest import ingest
+from prov.runs.schema import RunRecord
 from test_episodes import make_lerobot
 
 
-def _sessions(tmp_path: Path, lengths: list[list[int]]) -> list[list[str]]:
+def _sessions(ctx, tmp_path: Path, lengths: list[list[int]]) -> list[list[str]]:
     """Ingest one session per entry; return episode IDs per session."""
     out = []
     for i, ls in enumerate(lengths):
-        _, eps = ingest_lerobot(make_lerobot(tmp_path / f"s{i}", ls))
+        _, eps = ingest(ctx, make_lerobot(tmp_path / f"s{i}", ls))
         out.append([e.id for e in eps])
     return out
 
@@ -43,102 +46,102 @@ def test_parse_rejects(bad):
         aliases.parse(bad)
 
 
-def test_versions_never_change(registry, tmp_path):
-    [[a, b]] = _sessions(tmp_path, [[5, 5]])
-    ds1 = freeze("x", query=ALL)["all"].id
-    aliases.set_version("ds:y/1", ds1)
-    aliases.set_version("ds:y/1", ds1)                      # same target: no-op
+def test_versions_never_change(registry, tmp_path, ctx):
+    [[a, b]] = _sessions(ctx, tmp_path, [[5, 5]])
+    ds1 = freeze(ctx, "x", query=ALL)["all"].id
+    aliases.set_version(ctx, "ds:y/1", ds1)
+    aliases.set_version(ctx, "ds:y/1", ds1)                      # same target: no-op
     with pytest.raises(AliasError, match="never change"):
-        aliases.set_version("ds:y/1", freeze("z", episodes=[a])["all"].id)
+        aliases.set_version(ctx, "ds:y/1", freeze(ctx, "z", episodes=[a])["all"].id)
     with pytest.raises(AliasError, match="is not a dataset"):
-        aliases.set_version("ds:y/2", a)
+        aliases.set_version(ctx, "ds:y/2", a)
 
 
-def test_labels_move_and_history_is_git_log(registry, tmp_path):
-    [[a, b]] = _sessions(tmp_path, [[5, 5]])
-    v1 = freeze("x", episodes=[a])["all"].id
-    v2 = freeze("x", episodes=[a, b])["all"].id
-    aliases.set_label("ds:x@best", "ds:x/1")
-    aliases.set_label("ds:x@best", "ds:x/2")
-    assert aliases.resolve("ds:x@best") == v2 and aliases.resolve("ds:x/1") == v1
+def test_labels_move_and_history_is_git_log(registry, tmp_path, ctx):
+    [[a, b]] = _sessions(ctx, tmp_path, [[5, 5]])
+    v1 = freeze(ctx, "x", episodes=[a])["all"].id
+    v2 = freeze(ctx, "x", episodes=[a, b])["all"].id
+    aliases.set_label(ctx, "ds:x@best", "ds:x/1")
+    aliases.set_label(ctx, "ds:x@best", "ds:x/2")
+    assert aliases.resolve(ctx, "ds:x@best") == v2 and aliases.resolve(ctx, "ds:x/1") == v1
     log = git(registry, "log", "--format=%s", "--", "aliases/ds/x.yaml").splitlines()
     assert log[:2] == ["label ds:x@best -> 2 (was 1)", "label ds:x@best -> 1"]
     with pytest.raises(AliasError, match="does not exist"):
-        aliases.set_label("ds:x@best", "ds:x/9")
+        aliases.set_label(ctx, "ds:x@best", "ds:x/9")
     with pytest.raises(AliasError):
-        aliases.set_label("ds:x@best", "ds:other/1")
+        aliases.set_label(ctx, "ds:x@best", "ds:other/1")
 
 
-def test_resolve(registry, tmp_path):
-    [[a, _]] = _sessions(tmp_path, [[5, 5]])
-    assert aliases.resolve(a) == a
+def test_resolve(registry, tmp_path, ctx):
+    [[a, _]] = _sessions(ctx, tmp_path, [[5, 5]])
+    assert aliases.resolve(ctx, a) == a
     with pytest.raises(AliasError, match="no version"):
-        aliases.resolve("ds:missing/1")
+        aliases.resolve(ctx, "ds:missing/1")
     with pytest.raises(AliasError, match="no label"):
-        aliases.resolve("ds:missing@best")
+        aliases.resolve(ctx, "ds:missing@best")
 
 
 # datasets
 
-def test_freeze_numbers_versions_and_old_versions_stay(registry, tmp_path):
-    [s0, s1] = _sessions(tmp_path, [[5, 5], [5, 5, 5]])
-    v1 = freeze("cube", episodes=s0, notes="first two")["all"]
-    v2 = freeze("cube", query=ALL, parent="ds:cube/1")["all"]
+def test_freeze_numbers_versions_and_old_versions_stay(registry, tmp_path, ctx):
+    [s0, s1] = _sessions(ctx, tmp_path, [[5, 5], [5, 5, 5]])
+    v1 = freeze(ctx, "cube", episodes=s0, notes="first two")["all"]
+    v2 = freeze(ctx, "cube", query=ALL, parent="ds:cube/1")["all"]
 
     assert v1.meta["alias"] == "ds:cube/1" and v2.meta["alias"] == "ds:cube/2"
     assert v1.uri is None and v1.meta["episodes"] == 2 and v1.meta["sessions"] == 1
     assert v2.meta["parent"] == v1.id and v2.meta["selection"] == {"query": ALL}
-    assert members("ds:cube/1") == sorted(s0) and members("ds:cube/2") == sorted(s0 + s1)
-    assert aliases.resolve("ds:cube/1") == v1.id
+    assert members(ctx, "ds:cube/1") == sorted(s0) and members(ctx, "ds:cube/2") == sorted(s0 + s1)
+    assert aliases.resolve(ctx, "ds:cube/1") == v1.id
     assert git(registry, "status", "--porcelain") == ""
 
 
-def test_freeze_rejects_bad_selection(registry, tmp_path):
-    _sessions(tmp_path, [[5]])
+def test_freeze_rejects_bad_selection(registry, tmp_path, ctx):
+    _sessions(ctx, tmp_path, [[5]])
     with pytest.raises(DatasetError, match="not registered"):
-        freeze("x", episodes=["ep_00000000000000000000000000"])
+        freeze(ctx, "x", episodes=["ep_00000000000000000000000000"])
     with pytest.raises(DatasetError, match="no episodes"):
-        freeze("x", query="SELECT id FROM episodes WHERE false")
+        freeze(ctx, "x", query="SELECT id FROM episodes WHERE false")
     with pytest.raises(DatasetError):
-        freeze("x")
-    assert aliases.versions("ds", "x") == {}
+        freeze(ctx, "x")
+    assert aliases.versions(ctx, "ds", "x") == {}
 
 
-def test_split_by_episode(registry, tmp_path):
-    [ids] = _sessions(tmp_path, [[5] * 20])
-    parts = freeze("cube", query=ALL, holdout=0.2, seed=7)
-    train, held = members("ds:cube-train/1"), members("ds:cube-holdout/1")
+def test_split_by_episode(registry, tmp_path, ctx):
+    [ids] = _sessions(ctx, tmp_path, [[5] * 20])
+    parts = freeze(ctx, "cube", query=ALL, holdout=0.2, seed=7)
+    train, held = members(ctx, "ds:cube-train/1"), members(ctx, "ds:cube-holdout/1")
     assert len(held) == 4 and len(train) == 16
     assert set(train) | set(held) == set(ids) and not set(train) & set(held)
     assert parts["train"].meta["siblings"] == {"all": parts["all"].id, "holdout": parts["holdout"].id}
-    freeze("cube", query=ALL, holdout=0.2, seed=7)
-    assert members("ds:cube-holdout/2") == held                 # same seed, same split
+    freeze(ctx, "cube", query=ALL, holdout=0.2, seed=7)
+    assert members(ctx, "ds:cube-holdout/2") == held                 # same seed, same split
 
 
-def test_split_by_session(registry, tmp_path):
-    sessions = _sessions(tmp_path, [[5] * 3, [5] * 3, [5] * 3, [5] * 3])
-    freeze("cube", query=ALL, holdout=0.25, by="session")
-    held = set(members("ds:cube-holdout/1"))
+def test_split_by_session(registry, tmp_path, ctx):
+    sessions = _sessions(ctx, tmp_path, [[5] * 3, [5] * 3, [5] * 3, [5] * 3])
+    freeze(ctx, "cube", query=ALL, holdout=0.25, by="session")
+    held = set(members(ctx, "ds:cube-holdout/1"))
     assert any(held == set(s) for s in sessions)                # exactly one whole session
     with pytest.raises(DatasetError, match="every episode"):
-        freeze("one", episodes=sessions[0], holdout=0.5, by="session")
+        freeze(ctx, "one", episodes=sessions[0], holdout=0.5, by="session")
 
 
-def test_dataset_sessions_for_lerobot(registry, tmp_path):
-    [s0, s1] = _sessions(tmp_path, [[5, 5, 5], [5, 5]])
-    freeze("pick", episodes=[s0[0], s0[2], s1[1]])
-    got = dataset_sessions("ds:pick/1")
-    with catalog.connect() as con:
+def test_dataset_sessions_for_lerobot(registry, tmp_path, ctx):
+    [s0, s1] = _sessions(ctx, tmp_path, [[5, 5, 5], [5, 5]])
+    freeze(ctx, "pick", episodes=[s0[0], s0[2], s1[1]])
+    got = dataset_sessions(ctx, "ds:pick/1")
+    with catalog.connect(ctx) as con:
         ses = dict(con.execute("SELECT id, session FROM episodes").fetchall())
     assert got == {ses[s0[0]]: [0, 2], ses[s1[1]]: [1]}
 
 
-def test_catalog_tables_and_failure_query(registry, tmp_path):
-    [ids] = _sessions(tmp_path, [[5, 5, 5]])
-    annotate(ids[1], {"outcome": "failure", "failure_type": "grasp_slip"})
-    freeze("cube", query=ALL)
-    aliases.set_label("ds:cube@latest", "ds:cube/1")
-    with catalog.connect() as con:
+def test_catalog_tables_and_failure_query(registry, tmp_path, ctx):
+    [ids] = _sessions(ctx, tmp_path, [[5, 5, 5]])
+    annotate(ctx, ids[1], {"outcome": "failure", "failure_type": "grasp_slip"})
+    freeze(ctx, "cube", query=ALL)
+    aliases.set_label(ctx, "ds:cube@latest", "ds:cube/1")
+    with catalog.connect(ctx) as con:
         rows = con.execute("""
             SELECT e.id, ft.value
             FROM dataset_members m JOIN episodes e ON e.id = m.episode
@@ -152,9 +155,9 @@ def test_catalog_tables_and_failure_query(registry, tmp_path):
 
 # load / publish --alias / CLI
 
-def test_load_inside_run_records_inputs(repo, registry, monkeypatch, tmp_path):
-    _sessions(tmp_path, [[5, 5]])
-    freeze("cube", query=ALL)
+def test_load_inside_run_records_inputs(repo, registry, monkeypatch, tmp_path, ctx):
+    _sessions(ctx, tmp_path, [[5, 5]])
+    freeze(ctx, "cube", query=ALL)
     (repo / "prov.toml").write_text('project = "demo"\n')
     git(repo, "add", "prov.toml")
     git(repo, "commit", "-q", "-m", "prov.toml")
@@ -167,31 +170,31 @@ def test_load_inside_run_records_inputs(repo, registry, monkeypatch, tmp_path):
     assert main(["run", "--kind", "train", "--", sys.executable, "-c", code]) == 0
 
     [run] = [RunRecord.from_yaml(p) for p in (registry / "records" / "runs").glob("*.yaml")]
-    model = aliases.resolve("model:cube-policy/0.1")
-    assert run.inputs == [aliases.resolve("ds:cube/1")] and run.outputs == [model]
-    with catalog.connect() as con:
+    model = aliases.resolve(ctx, "model:cube-policy/0.1")
+    assert run.inputs == [aliases.resolve(ctx, "ds:cube/1")] and run.outputs == [model]
+    with catalog.connect(ctx) as con:
         chain = con.execute("""
             SELECT al.ref FROM run_outputs o JOIN run_inputs i ON i.run = o.run
             JOIN aliases al ON al.id = i.artifact WHERE o.artifact = ?""", [model]).fetchall()
     assert chain == [("ds:cube/1",)]
 
 
-def test_publish_alias_checked_before_moving(registry, tmp_path):
+def test_publish_alias_checked_before_moving(registry, tmp_path, ctx):
     f = tmp_path / "cal.yaml"
     f.write_text("fx: 1\n")
-    rec = publish(f, "calibration", alias="calib:wrist/1")
-    assert aliases.resolve("calib:wrist/1") == rec.id
+    rec = publish(ctx, f, "calibration", alias="calib:wrist/1")
+    assert aliases.resolve(ctx, "calib:wrist/1") == rec.id
     g = tmp_path / "cal2.yaml"
     g.write_text("fx: 2\n")
     with pytest.raises(StoreError, match="already exists"):
-        publish(g, "calibration", alias="calib:wrist/1")
+        publish(ctx, g, "calibration", alias="calib:wrist/1")
     with pytest.raises(StoreError, match="numbered version naming a calibration"):
-        publish(g, "calibration", alias="model:wrist/1")
+        publish(ctx, g, "calibration", alias="model:wrist/1")
     assert g.exists()
 
 
-def test_cli_dataset_and_alias(registry, tmp_path, capsys):
-    [ids] = _sessions(tmp_path, [[5, 5, 5, 5]])
+def test_cli_dataset_and_alias(registry, tmp_path, capsys, ctx):
+    [ids] = _sessions(ctx, tmp_path, [[5, 5, 5, 5]])
     eps = tmp_path / "eps.txt"
     eps.write_text("\n".join(ids[:3]))
     assert main(["dataset", "freeze", "cube", "--episodes", str(eps), "--holdout", "0.34"]) == 0

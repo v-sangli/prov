@@ -3,7 +3,7 @@ from pathlib import Path
 
 from conftest import git
 from prov.cli import main
-from prov.records import RunRecord
+from prov.runs.schema import RunRecord
 
 
 def _records(registry: Path) -> list[RunRecord]:
