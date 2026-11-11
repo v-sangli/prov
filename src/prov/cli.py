@@ -39,6 +39,11 @@
     prov journal lint                              check frontmatter, IDs, images, links, NOW.md
     prov journal index                             rebuild journal/INDEX.md (docs by date and status)
 
+    prov site build [<vault dir>] [--name N]
+        Build a Markdown vault (default: this project's journal) into a static site with Quartz.
+    prov site serve [--host 127.0.0.1|<addr>|tailscale] [--port 8090] [--rebuild-every 300]
+        Serve every built site, with /<site>/media/ answered read-only from the store.
+
     prov rerun <run_id>
         Run the same command again on the recorded code snapshot (git worktrees), as a new run
         tagged rerun_of=<run_id>.
@@ -59,7 +64,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from prov import aliases, api, catalog, config, datasets, episodes, gitsnap, journal, lineage, registry, rerun, store, wb
+from prov import aliases, api, catalog, config, datasets, episodes, gitsnap, journal, lineage, registry, rerun, site, store, wb
 from prov.ids import kind_of, new_id
 from prov.records import Env, RunRecord
 
@@ -227,6 +232,19 @@ def cmd_journal(args: argparse.Namespace) -> int:
     return 1 if problems else 0
 
 
+def cmd_site(args: argparse.Namespace) -> int:
+    if args.action == "serve":
+        site.serve(args.host, args.port, args.rebuild_every)
+        return 0
+    if args.source:
+        source, name = Path(args.source), args.name or Path(args.source).resolve().name
+    else:
+        project = config.load_project(Path.cwd())
+        source, name = project.root / "journal", args.name or project.project
+    print(site.build(source, name))
+    return 0
+
+
 def cmd_rerun(args: argparse.Namespace) -> int:
     return rerun.rerun(args.run_id)
 
@@ -289,18 +307,25 @@ def main(argv: list[str] | None = None) -> int:
     jr.add_argument("action", choices=["new", "lint", "index"])
     jr.add_argument("topic", nargs="?")
     jr.add_argument("--continues", help="doc folder this one continues (relative to journal/)")
+    st = sub.add_parser("site", help="build and serve journal / handbook sites")
+    st.add_argument("action", choices=["build", "serve"])
+    st.add_argument("source", nargs="?", help="vault folder to build (default: this project's journal)")
+    st.add_argument("--name", help="site name (default: project name or folder name)")
+    st.add_argument("--host", default="127.0.0.1", help="address to bind, or `tailscale`")
+    st.add_argument("--port", type=int, default=8090)
+    st.add_argument("--rebuild-every", type=int, default=300, help="seconds; 0 disables")
     sub.add_parser("rerun", help="re-run a recorded run on its code snapshot").add_argument("run_id")
     for name, help_ in (("trace", "upstream lineage"), ("uses", "downstream lineage")):
         sub.add_parser(name, help=help_).add_argument("ref")
     args = parser.parse_args(argv)
     if args.cmd == "alias" and args.action != "show" and not args.target:
         parser.error(f"alias {args.action} needs a target")
-    handlers = {"init": cmd_init, "journal": cmd_journal, "rerun": cmd_rerun, "trace": cmd_lineage, "uses": cmd_lineage, "dataset": cmd_dataset, "alias": cmd_alias, "run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
+    handlers = {"site": cmd_site, "init": cmd_init, "journal": cmd_journal, "rerun": cmd_rerun, "trace": cmd_lineage, "uses": cmd_lineage, "dataset": cmd_dataset, "alias": cmd_alias, "run": cmd_run, "publish": cmd_publish, "show": cmd_show, "ingest": cmd_ingest,
                 "annotate": cmd_annotate, "catalog": cmd_catalog, "q": cmd_q}
     try:
         return handlers[args.cmd](args)
     except (config.ConfigError, gitsnap.SnapshotError, store.StoreError, aliases.AliasError,
-            datasets.DatasetError, rerun.RerunError, journal.JournalError, ValueError, catalog.duckdb.Error) as exc:
+            datasets.DatasetError, rerun.RerunError, journal.JournalError, site.SiteError, ValueError, catalog.duckdb.Error) as exc:
         print(f"prov: {exc}", file=sys.stderr)
         return 2
 

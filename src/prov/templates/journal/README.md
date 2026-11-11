@@ -24,7 +24,8 @@ milestones, written by people and agents.
    `analysis/` (plotting skill) and copied in with `prov.plot.to_journal`, named `<fig_id>.png`,
    with the ID in its caption. Throwaway plots stay out.
 6. **Keep files small.** PNG for plots, JPEG for photos, about 500 KB each. Videos are embedded
-   from `media/` (a link into the store, not committed): `![[media/<run_id>/<file>.mp4]]`.
+   from `media/` (a link into the store, not committed) with `![[media/<run_id>/<file>.mp4]]`
+   only: that form works in Obsidian and on the served site; a hand-written `<video>` tag does not.
 7. **Plans and decisions get docs too.** A plan is a doc with a table of items marked
    proposed / agreed / running / done; results land in their own docs and update the table.
    Accepted architecture decisions go to `docs/adr/`.
