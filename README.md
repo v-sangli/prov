@@ -3,6 +3,9 @@
 `prov`: IDs, provenance records, a local store, datasets of episodes, and the project journal for
 robot-learning research. Design: `docs/design.md` in the planning workspace.
 
+**Using it: [docs/usage.md](docs/usage.md)**: concepts, a start-to-finish workflow, every command,
+the Python API, catalog tables with example queries, the journal, and troubleshooting.
+
 ## Setup (once per machine)
 
 ```bash
