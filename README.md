@@ -25,7 +25,8 @@ quartz = "<path>/quartz"       # only for `prov site`
 node = "<path>/node/bin"
 ```
 
-The registry is a git repo: `git init -b main ~/registry`, first commit, private remote.
+The registry is a git repo: `git init -b main ~/registry`, then `echo .prov.lock > ~/registry/.gitignore`
+(the write lock, ADR 0016) in its first commit, and a private remote.
 
 ## Sites (`prov site`)
 

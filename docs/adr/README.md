@@ -19,6 +19,7 @@ One file per decision, written against the code as it is. Numbers are sequential
 | [0013](0013-record-schemas-are-pydantic-models.md) | Record schemas are pydantic models, closed to unknown fields | D13 |
 | [0014](0014-no-content-hashing-id-is-identity.md) | No content hashing: the ID is the identity, folders are read-only | D14 |
 | [0015](0015-calibrations-are-registry-artifacts.md) | Calibrations are registry artifacts; episodes reference theirs | D17 |
+| [0016](0016-one-registry-wide-write-lock.md) | One registry-wide lock serializes every registry write | - |
 
 D15 (operating knowledge in the handbook) and D16 (credentials) are machine-operating decisions
 and live with the handbook, not here.
