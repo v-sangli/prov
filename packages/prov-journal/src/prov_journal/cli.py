@@ -49,9 +49,8 @@ def cmd_index(args, get_ctx) -> int:
 
 
 def cmd_register(args, get_ctx) -> int:
-    ctx = get_ctx()
-    for doc in docs.docs(docs.journal_root()):
-        print(register.register(ctx, doc.path).id)
+    for record in register.register(get_ctx(), [d.path for d in docs.docs(docs.journal_root())]):
+        print(record.id)
     return 0
 
 
