@@ -22,7 +22,7 @@ class JournalView:
     ctx: object
     root: Path
     docs: list[Doc]
-    known: set[str]            # every run, artifact and episode ID in the registry
+    known: set[str]            # every node ID in the registry (catalog `nodes` view)
 
     def resolve(self, ref: str) -> str:
         """An alias or ID -> ID (raises AliasError)."""
@@ -34,8 +34,7 @@ class JournalView:
 
 def view(ctx, root: Path) -> JournalView:
     with catalog.connect(ctx) as con:
-        known = {i for (i,) in con.execute(
-            "SELECT id FROM runs UNION ALL SELECT id FROM artifacts UNION ALL SELECT id FROM episodes").fetchall()}
+        known = {i for (i,) in con.execute("SELECT id FROM nodes").fetchall()}
     return JournalView(ctx, root, docs(root), known)
 
 

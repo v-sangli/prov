@@ -159,3 +159,15 @@ def test_register_every_dated_doc(project, capsys):
     assert printed == expected
     assert [load(context(), i).path for i in printed] == [
         "journal/2026/11/2026-11-09-first/README.md", "journal/2026/11/2026-11-10-second/README.md"]
+
+
+def test_lint_knows_registered_doc_ids(project, ctx):
+    from conftest import git
+    from prov_journal.docs import docs
+    git(project, "init", "-q", "-b", "main")
+    new_doc("first", today=D1)
+    assert main(["register"]) == 0
+    [first] = [d.meta["id"] for d in docs(project / "journal")]
+    second = new_doc("second", today=D2)
+    second.write_text(second.read_text() + f"\nBuilds on {first}.\n")
+    assert lint(ctx, project / "journal") == []
