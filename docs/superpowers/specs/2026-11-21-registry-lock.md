@@ -43,3 +43,35 @@ machine); no lock backend axis until a second variant is real.
 ## Out of scope
 
 Locking across machines, pushing the registry, and locks on project repos for code snapshots.
+
+## Agreed interface sketch (2026-11-21)
+
+```python
+# src/prov/core/layout.py
+def registry_lock(registry: Path) -> Path: ...        # <registry>/.prov.lock
+
+# src/prov/core/errors.py
+class RegistryLocked(ProvError): ...                   # timeout reached; names the lock path
+
+# src/prov/storage/lock.py     (L1, new)
+class RegistryLock:
+    TIMEOUT_S: float = 60.0
+    def __init__(self, registry: Path, timeout_s: float = TIMEOUT_S) -> None: ...
+    def __enter__(self) -> "RegistryLock": ...        # waits up to timeout_s, else RegistryLocked
+    def __exit__(self, *exc) -> None: ...
+```
+
+Taken once at each write operation's entry; code under it calls the unlocked internals
+(non-reentrant, so an accidental nesting fails loudly after the timeout):
+
+| Operation | Holds the lock around |
+|---|---|
+| `artifacts.publish` | the whole publish (bytes placed, record written and committed, alias set); `artifact.published` is emitted after release. Unlocked internal: `_publish` |
+| `datasets.freeze` | version pick → records → members → `aliases._set_version`; the catalog selection runs before the lock |
+| `episodes.ingest` | the whole ingest, publishing the session through `_publish`; the event is emitted after release |
+| `episodes.annotate` | lookup, append and commit |
+| `aliases.set_version` / `set_label` | read → modify → write → commit. Unlocked internals: `_set_version` / `_set_label` |
+| `runs.records.write` | each write of the run record; never while the user's command runs |
+| `catalog.rebuild` | the build and the swap |
+
+Lock file: `<registry>/.prov.lock`, untracked; the registry's `.gitignore` lists it.
