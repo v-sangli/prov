@@ -14,8 +14,8 @@ jobs:
       - name: Install
         run: |
           uv venv .venv --python 3.12
-          uv pip install --python .venv/bin/python -e ".[test,plot]"
+          uv pip install --python .venv/bin/python -e packages/prov -e packages/prov-journal -e "packages/prov-skills[plot]" pytest
       - name: Lint
-        run: uvx ruff@0.8.4 check src tests
+        run: uvx ruff@0.8.4 check packages conftest.py
       - name: Test
         run: .venv/bin/python -m pytest -q

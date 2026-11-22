@@ -81,3 +81,19 @@ def test_library_code_does_not_print():
                  and any(isinstance(n, ast.Call) and getattr(n.func, "id", None) == "print"
                          for n in ast.walk(ast.parse(p.read_text())))]
     assert offenders == []
+
+
+def test_core_imports_no_tool():
+    """prov is the core: prov-journal and prov-skills import it, never the other way round."""
+    offenders = []
+    for module, path in MODULES.items():
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names = [node.module]
+            else:
+                continue
+            offenders += [f"{module}:{node.lineno}: {n}" for n in names
+                          if n.split(".")[0] in ("prov_journal", "prov_skills")]
+    assert offenders == []

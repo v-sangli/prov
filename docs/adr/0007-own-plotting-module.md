@@ -1,6 +1,6 @@
 # 0007. Plotting is our own module, `prov.plot`; figures4papers ideas only, no code copied
 
-Status: Accepted (2026-11-10)
+Status: Accepted (2026-11-10); amended by 0018 (moved)
 Covers: `src/prov/plot.py`, `src/prov/integrations/plot.py`, `src/prov/journal/skills/plotting/`
 PR: https://github.com/v-sangli/prov/pull/2
 

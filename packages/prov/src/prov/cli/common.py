@@ -1,7 +1,7 @@
 """Helpers shared by the command groups.
 
 Every handler is `handler(args, get_ctx) -> exit code`; `get_ctx()` loads the Context, so commands
-that need no machine config (journal new / index, --help) never read it.
+that need no machine config (init, --help) never read it.
 """
 
 from prov.core.errors import ConfigError

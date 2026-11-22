@@ -1,6 +1,6 @@
 # 0006. The journal is an Obsidian vault of Markdown in each project repo, checked by `prov journal lint`
 
-Status: Accepted (2026-11-10)
+Status: Accepted (2026-11-10); amended by 0018 (moved)
 Covers: `src/prov/journal/`, `src/prov/cli/journal.py`
 PR: https://github.com/v-sangli/prov/pull/2
 
