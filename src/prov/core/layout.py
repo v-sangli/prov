@@ -8,9 +8,12 @@ registry/
     records/annotations/<ses_id>.jsonl       one Annotation per line, append-only
     datasets/<ds_id>.txt                     member episode IDs, one per line
     aliases/<alias kind>/<name>.yaml         versions and labels
+    .prov.lock                               the write lock (untracked)
 store/
     <kind dir>/<id>/...                      bytes, read-only once published
 """
+
+from pathlib import Path
 
 RUNS_DIR = "records/runs"
 ARTIFACTS_DIR = "records/artifacts"
@@ -32,6 +35,11 @@ KIND_DIRS = {
     "video": "media",
 }
 MEDIA_DIR = KIND_DIRS["video"]
+LOCK_FILE = ".prov.lock"
+
+
+def registry_lock(registry: Path) -> Path:
+    return registry / LOCK_FILE
 
 
 def run_record(run_id: str) -> str:

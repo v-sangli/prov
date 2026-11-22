@@ -17,6 +17,10 @@ class StoreError(ProvError):
     pass
 
 
+class RegistryLocked(ProvError):
+    pass
+
+
 class AliasError(ProvError):
     pass
 
