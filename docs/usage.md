@@ -2,7 +2,7 @@
 
 How to record, find and reuse everything a robot-learning project makes: recording sessions,
 episodes, datasets, checkpoints, results, figures, and the runs that made them. Setup is in the
-[README](../README.md); the design rationale is `docs/design.md` in the planning workspace.
+[README](../README.md); the design decisions are in [docs/adr/](adr/).
 
 - [Concepts](#concepts)
 - [Workflow, start to finish](#workflow-start-to-finish)
