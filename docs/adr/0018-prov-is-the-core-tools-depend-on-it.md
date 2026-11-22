@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-21)
 Covers: `pyproject.toml`, `conftest.py`, `packages/prov/`, `packages/prov-journal/`, `packages/prov-skills/`
-PR: pending (spec and plan 60ad085)
+PR: https://github.com/v-sangli/prov/pull/5 (spec and plan 60ad085)
 
 ## Context
 
