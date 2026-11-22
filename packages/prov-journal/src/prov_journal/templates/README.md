@@ -5,9 +5,9 @@ milestones, written by people and agents.
 
 - **[NOW.md](NOW.md)** is the big picture: goal, current understanding, open threads, milestones.
   Read it first.
-- **[INDEX.md](INDEX.md)** lists every doc by date and status (`prov journal index` rebuilds it).
+- **[INDEX.md](INDEX.md)** lists every doc by date and status (`prov-journal index` rebuilds it).
 - **Docs** live in `<year>/<month>/<YYYY-MM-DD>-<topic>/README.md`, one per topic per day, with
-  their figures beside them. Start one with `prov journal new <topic>`.
+  their figures beside them. Start one with `prov-journal new <topic>`.
 
 ## Rules
 
@@ -19,7 +19,7 @@ milestones, written by people and agents.
 3. **Mark every claim** *verified* (measured, with the numbers) or *inferred*.
 4. **Evidence is IDs, not paths.** `evidence:` lists the run, artifact, episode or alias IDs the
    findings rest on (`run_01J...`, `model:cube/0.4`, `bench:cube-holdout/2`). Recordings and
-   checkpoints are never copied in. `prov journal lint` fails on IDs that don't resolve.
+   checkpoints are never copied in. `prov-journal lint` fails on IDs that don't resolve.
 5. **Figures come from `prov run`.** A figure in a doc is made by a committed script in
    `analysis/` (plotting skill) and copied in with `prov.plot.to_journal`, named `<fig_id>.png`,
    with the ID in its caption. Throwaway plots stay out.

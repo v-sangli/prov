@@ -6,11 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from prov.integrations.site import build as site
-from prov.integrations.site.server import make_handler
-from prov.journal.docs import new_doc
-from prov.journal.project import init_project
+from prov.core.context import init_project
 from prov.wiring import context
+from prov_journal.docs import new_doc
+from prov_journal.project import init_journal
+from prov_journal.site import build as site
+from prov_journal.site.server import make_handler
 
 QUARTZ = Path(__file__).resolve().parents[4] / "tools" / "quartz"
 NODE = Path(__file__).resolve().parents[4] / "tools" / "node" / "bin"
@@ -80,7 +81,8 @@ def test_build_journal_with_quartz(registry, tmp_path, monkeypatch):
     root = tmp_path / "proj"
     root.mkdir()
     monkeypatch.chdir(root)
-    init_project(ctx, root, "proj")
+    init_project(root, "proj")
+    init_journal(ctx, root)
     (tmp_path / "store" / "media" / "run_A").mkdir(parents=True)
     (tmp_path / "store" / "media" / "run_A" / "clip.mp4").write_bytes(b"0" * 5_000_000)
     doc = new_doc("first-look")

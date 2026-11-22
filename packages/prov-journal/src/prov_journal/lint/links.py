@@ -1,6 +1,6 @@
 """`continues` and `superseded_by` point at docs that exist; superseded docs name their successor."""
 
-from prov.core.extensions import LintCheck
+from prov_journal.lint.check import LintCheck
 
 
 def check(view) -> list[str]:

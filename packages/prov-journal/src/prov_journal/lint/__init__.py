@@ -1,16 +1,20 @@
-"""`prov journal lint`: every LintCheck in `ctx.ext.lint_checks` runs over a JournalView.
+"""`prov-journal lint`: every LintCheck in CHECKS runs over a JournalView.
 
-Each rule is one module here exposing CHECK; register new ones in `prov.wiring`. A check returns
-`path:line: message` strings, empty when its rule holds. Checks other than `frontmatter` skip docs
-whose frontmatter is missing or invalid.
+Each rule is one module here exposing CHECK; register new ones in CHECKS (`check.py` holds the
+LintCheck type). A check returns `path:line: message` strings, empty when its rule holds. Checks
+other than `frontmatter` skip docs whose frontmatter is missing or invalid.
 """
 
 from dataclasses import dataclass
 from pathlib import Path
 
 from prov.artifacts import aliases
-from prov.journal.docs import Doc, docs
 from prov.storage import catalog
+from prov_journal.docs import Doc, docs
+from prov_journal.lint import body_ids, evidence, frontmatter, images, links, now
+from prov_journal.lint.check import LintCheck
+
+CHECKS: list[LintCheck] = [frontmatter.CHECK, links.CHECK, evidence.CHECK, body_ids.CHECK, images.CHECK, now.CHECK]
 
 
 @dataclass(frozen=True)
@@ -35,7 +39,7 @@ def view(ctx, root: Path) -> JournalView:
     return JournalView(ctx, root, docs(root), known)
 
 
-def lint(ctx, root: Path) -> list[str]:
+def lint(ctx, root: Path, checks: list[LintCheck] = CHECKS) -> list[str]:
     """Problems as `path:line: message`; empty when the journal is clean."""
     v = view(ctx, root)
-    return [problem for check in ctx.ext.lint_checks for problem in check.check(v)]
+    return [problem for check in checks for problem in check.check(v)]

@@ -8,13 +8,13 @@ import sys
 
 import duckdb
 
-from prov.cli import artifacts, datasets, episodes, journal, query, run, site
+from prov.cli import artifacts, datasets, episodes, init, query, run
 from prov.core import log
 from prov.core.context import Context
 from prov.core.errors import ProvError
 from prov.wiring import extensions
 
-GROUPS = [run, artifacts, episodes, query, datasets, journal, site]
+GROUPS = [run, artifacts, episodes, query, datasets, init]
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -3,7 +3,6 @@ future code add their own entries to a bundle the same way.
 
     CatalogTables   DDL plus a row source for some catalog tables (storage.catalog builds them)
     IngestFormat    reads a recording folder into session meta + episode rows (episodes.ingest)
-    LintCheck       one journal rule (journal.lint)
 """
 
 from collections.abc import Callable, Iterable
@@ -27,13 +26,6 @@ class IngestFormat:
 
 
 @dataclass(frozen=True)
-class LintCheck:
-    name: str
-    check: Callable[[Any], list[str]]                    # JournalView -> ["path:line: message"]
-
-
-@dataclass(frozen=True)
 class Extensions:
     tables: list[CatalogTables] = field(default_factory=list)
     formats: dict[str, IngestFormat] = field(default_factory=dict)
-    lint_checks: list[LintCheck] = field(default_factory=list)

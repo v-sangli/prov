@@ -17,7 +17,7 @@ from urllib.parse import unquote, urlsplit
 
 from prov.core import layout, log
 from prov.core.errors import SiteError
-from prov.integrations.site.build import built_sites, rebuild_changed
+from prov_journal.site.build import built_sites, rebuild_changed
 
 mimetypes.add_type("video/mp4", ".mp4")
 mimetypes.add_type("text/markdown", ".md")

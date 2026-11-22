@@ -5,7 +5,7 @@ Machine config: `$PROV_CONFIG` or `~/.config/prov/config.toml`:
     store_root = "~/store"
     catalog = "~/.cache/prov/catalog.duckdb"    # optional; rebuilt from the registry
     sites_dir = "~/.cache/prov/sites"           # optional; built sites
-    quartz = "<Quartz checkout>"                # optional; only for `prov site`
+    quartz = "<Quartz checkout>"                # optional; only for `prov-journal site`
     node = "<dir with node/npx>"                # optional
 
 Project config: `prov.toml`, found by walking up from the working directory:
@@ -74,3 +74,12 @@ def load_project(start: Path) -> ProjectConfig:
             repos = [(d / r).resolve() for r in data.get("repos", ["."])]
             return ProjectConfig(project=data["project"], root=d, repos=repos)
     raise ConfigError(f"no prov.toml in {start} or its parents")
+
+
+def init_project(root: Path, project: str) -> list[str]:
+    """`prov init`: write `root`/prov.toml unless it exists; returns what it created."""
+    path = root / "prov.toml"
+    if path.exists():
+        return []
+    path.write_text(f'project = "{project}"\nrepos = ["."]\n')
+    return ["prov.toml"]

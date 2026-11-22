@@ -1,7 +1,7 @@
 """Every doc has valid frontmatter, a date matching its folder, and a known status."""
 
-from prov.core.extensions import LintCheck
-from prov.journal.docs import STATUSES
+from prov_journal.lint.check import LintCheck
+from prov_journal.docs import STATUSES
 
 
 def check(view) -> list[str]:

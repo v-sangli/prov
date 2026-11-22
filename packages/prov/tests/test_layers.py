@@ -14,7 +14,7 @@ LAYERS = {
     "prov.episodes": 3,
     "prov.datasets": 4,
     "prov.lineage": 5,
-    "prov.journal": 6, "prov.integrations": 6,
+    "prov.integrations": 6,
     "prov.wiring": 7,
     "prov.api": 8, "prov.plot": 8,
     "prov.cli": 9, "prov": 9,

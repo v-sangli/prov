@@ -1,6 +1,6 @@
 """Every ID mentioned in a doc's body is in the registry."""
 
-from prov.core.extensions import LintCheck
+from prov_journal.lint.check import LintCheck
 from prov.core.ids import ID_RE
 
 

@@ -1,7 +1,7 @@
 """`evidence:` is a list of IDs or aliases that resolve to something in the registry (not paths)."""
 
 from prov.core.errors import AliasError
-from prov.core.extensions import LintCheck
+from prov_journal.lint.check import LintCheck
 from prov.core.ids import ID_RE
 
 

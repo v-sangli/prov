@@ -2,7 +2,7 @@
 
 import re
 
-from prov.core.extensions import LintCheck
+from prov_journal.lint.check import LintCheck
 
 IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
 

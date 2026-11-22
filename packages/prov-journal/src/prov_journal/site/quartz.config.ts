@@ -1,4 +1,4 @@
-// Quartz v4.5.2 config used by `prov site build` (copied into the Quartz checkout before each build).
+// Quartz v4.5.2 config used by `prov-journal site build` (copied into the Quartz checkout before each build).
 // Changes from upstream: pageTitle, analytics off, baseUrl localhost, media/ ignored, local fonts, no CDN caching.
 import { QuartzConfig } from "./quartz/cfg"
 import * as Plugin from "./quartz/plugins"

@@ -1,6 +1,6 @@
 """NOW.md's open-threads table keeps one short line per thread."""
 
-from prov.core.extensions import LintCheck
+from prov_journal.lint.check import LintCheck
 
 MAX_THREAD_ROW = 300
 

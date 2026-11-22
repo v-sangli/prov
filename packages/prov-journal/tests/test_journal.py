@@ -3,12 +3,14 @@ from pathlib import Path
 
 import pytest
 
-from prov.cli import main
+from prov import cli
 from prov.artifacts.publish import publish
+from prov.core.context import init_project
 from prov.core.errors import JournalError
-from prov.journal.docs import index, new_doc
-from prov.journal.lint import lint
-from prov.journal.project import init_project
+from prov_journal.cli import main
+from prov_journal.docs import index, new_doc
+from prov_journal.lint import lint
+from prov_journal.project import init_journal
 
 D1, D2 = date(2026, 11, 9), date(2026, 11, 10)
 
@@ -18,7 +20,8 @@ def project(registry, tmp_path, monkeypatch, ctx) -> Path:
     root = tmp_path / "cube-grasp"
     root.mkdir()
     monkeypatch.chdir(root)
-    init_project(ctx, root, "cube-grasp")
+    init_project(root, "cube-grasp")
+    init_journal(ctx, root)
     return root
 
 
@@ -33,15 +36,12 @@ def _set_frontmatter(doc: Path, **fields) -> None:
     doc.write_text(text)
 
 
-def test_init_project(project, tmp_path, ctx):
-    for p in ("prov.toml", "journal/README.md", "journal/NOW.md", "journal/INDEX.md"):
+def test_init_journal(project, tmp_path, ctx):
+    for p in ("journal/README.md", "journal/NOW.md", "journal/INDEX.md"):
         assert (project / p).is_file(), p
     assert (project / "journal" / "media").resolve() == (tmp_path / "store" / "media").resolve()
-    for skill in ("plotting", "journal"):
-        assert (project / ".claude" / "skills" / skill / "SKILL.md").is_file()
     assert "journal/media" in (project / ".gitignore").read_text().splitlines()
-    assert 'project = "cube-grasp"' in (project / "prov.toml").read_text()
-    assert init_project(ctx, project, "cube-grasp") == []                     # idempotent, never overwrites
+    assert init_journal(ctx, project) == []                                    # idempotent, never overwrites
 
 
 def test_new_doc(project):
@@ -125,11 +125,11 @@ def test_index_lists_docs_newest_first(project):
 
 
 def test_cli(project, capsys):
-    assert main(["journal", "new", "closure"]) == 0
+    assert main(["new", "closure"]) == 0
     doc = Path(capsys.readouterr().out.strip())
     assert doc.is_file()
-    assert main(["journal", "lint"]) == 0 and "journal OK" in capsys.readouterr().out
+    assert main(["lint"]) == 0 and "journal OK" in capsys.readouterr().out
     _set_frontmatter(doc, evidence="[ckpt_00000000000000000000000000]")
-    assert main(["journal", "lint"]) == 1
-    assert main(["journal", "index"]) == 0
-    assert main(["init", "cube-grasp"]) == 0 and "already set up" in capsys.readouterr().out.splitlines()[-1]
+    assert main(["lint"]) == 1
+    assert main(["index"]) == 0
+    assert cli.main(["init", "cube-grasp"]) == 0 and "already set up" in capsys.readouterr().out.splitlines()[-1]

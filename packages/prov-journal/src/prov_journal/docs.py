@@ -32,7 +32,7 @@ def journal_root(start: Path | None = None) -> Path:
     project = load_project(start or Path.cwd())
     root = project.root / "journal"
     if not root.is_dir():
-        raise JournalError(f"no journal/ in {project.root}; run `prov init`")
+        raise JournalError(f"no journal/ in {project.root}; run `prov-journal init`")
     return root
 
 
@@ -85,7 +85,7 @@ def docs(root: Path) -> list[Doc]:
 
 
 def index_text(rows: list[tuple[str, str, str, str, str]]) -> str:
-    lines = ["# Index", "", "Every doc, newest first. Rebuilt by `prov journal index`; don't edit by hand.", "",
+    lines = ["# Index", "", "Every doc, newest first. Rebuilt by `prov-journal index`; don't edit by hand.", "",
              "| Date | Doc | Status | Evidence |", "| --- | --- | --- | --- |"]
     lines += [f"| {d} | [{t}]({p}) | {s} | {e} |" for d, t, p, s, e in rows]
     return "\n".join(lines) + "\n"
