@@ -1,7 +1,7 @@
 # 0008. One infrastructure for all projects; the project is a field on every run
 
 Status: Accepted (2026-11-10); amended by 0017 (W&B removed)
-Covers: `src/prov/core/context.py` (`prov.toml`), `src/prov/runs/schema.py` (`project`), `src/prov/core/runenv.py` (`PROV_PROJECT`)
+Covers: `packages/prov/src/prov/core/context.py` (`prov.toml`), `packages/prov/src/prov/runs/schema.py` (`project`), `packages/prov/src/prov/core/runenv.py` (`PROV_PROJECT`)
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -31,7 +31,7 @@ Not built: `prov run --project`. The project comes only from `prov.toml`.
 - Rules out per-project registries and stores.
 
 ## Enforced by
-- `tests/test_run.py::test_run_writes_record_and_commits_it` (`project == "demo"` from `prov.toml`)
-- `tests/test_run.py::test_no_prov_toml`
-- `tests/test_phase5.py::test_wandb_init_offline_records_run_path` (W&B project = prov project)
+- `packages/prov/tests/test_run.py::test_run_writes_record_and_commits_it` (`project == "demo"` from `prov.toml`)
+- `packages/prov/tests/test_run.py::test_no_prov_toml`
+- `packages/prov/tests/test_phase5.py::test_wandb_init_offline_records_run_path` (W&B project = prov project)
 - `prov.runs.schema.RunRecord.project` is a required field.

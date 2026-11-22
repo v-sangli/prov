@@ -37,11 +37,12 @@ made; `<...>` marks values to fill in.
 
 ```bash
 cd ~/code/cube-grasp
-prov init cube-grasp
+prov init cube-grasp            # prov.toml
+prov-journal init               # journal/ skeleton, journal/media link, .gitignore lines
+prov-skills install .           # links the plot and journal skills into .claude/skills/
 ```
 
-This writes `prov.toml`, a `journal/` skeleton and links the journal and plotting skills into
-`.claude/skills/`. It never overwrites anything. If the project's code spans several repos, list
+None of them overwrites anything. If the project's code spans several repos, list
 them in `prov.toml` so every run snapshots all of them:
 
 ```toml
@@ -134,14 +135,14 @@ IDs, labels and lineage too.
 **7. Plot into the journal**:
 
 ```bash
-prov journal new hand-closure            # journal/2026/11/2026-11-12-hand-closure/README.md
+prov-journal new hand-closure            # journal/2026/11/2026-11-12-hand-closure/README.md
 prov run --kind analysis -- python plot_closure.py
 ```
 
 ```python
 import matplotlib.pyplot as plt
 import prov
-from prov import plot
+from prov_skills import plot
 
 res = prov.load("res:cube-pick-eval/1")
 with plot.style():
@@ -154,7 +155,7 @@ plot.to_journal(rec, "journal/2026/11/2026-11-12-hand-closure")    # copies fig_
 Write the doc, cite the figure and results in `evidence:`, then check it:
 
 ```bash
-prov journal lint && prov journal index
+prov-journal lint && prov-journal index
 ```
 
 **8. Trace it back**:
@@ -290,12 +291,14 @@ A node reached twice is shown as `(see above)`.
 ### Project and journal
 
 ```
-prov init <project>
-prov journal new <topic> [--continues <doc folder, relative to journal/>]
-prov journal lint              exits 1 when there are problems
-prov journal index             rewrites journal/INDEX.md
-prov site build [<folder>] [--name NAME]
-prov site serve [--host 127.0.0.1|tailscale|ADDR] [--port 8090] [--rebuild-every 300]
+prov init <project>            writes prov.toml
+prov-journal init              journal/ skeleton, journal/media link, .gitignore lines
+prov-journal new <topic> [--continues <doc folder, relative to journal/>]
+prov-journal lint              exits 1 when there are problems
+prov-journal index             rewrites journal/INDEX.md
+prov-journal site build [<folder>] [--name NAME]
+prov-journal site serve [--host 127.0.0.1|tailscale|ADDR] [--port 8090] [--rebuild-every 300]
+prov-skills install <project>  links every skill into <project>/.claude/skills/
 ```
 
 See [The journal](#the-journal) and [Sites](#sites).
@@ -317,7 +320,7 @@ nothing is recorded as an input or output.
 | `prov.refs()` | `{"prov_run", "prov_project", "prov_inputs"}`: the run's IDs, for any tool's config or metadata | required; `RunError` outside a run |
 | `prov.context()` | the `Context` (paths from the machine config, the current run) for calling library modules directly | — |
 
-**Plotting**, `from prov import plot`:
+**Plotting**, `from prov_skills import plot` (prov-skills with the `plot` extra):
 
 | Call | Does |
 | --- | --- |
@@ -372,7 +375,7 @@ FROM episodes GROUP BY session ORDER BY session;
 ## The journal
 
 Each doc is `journal/<YYYY>/<MM>/<YYYY-MM-DD>-<topic>/README.md`, one per topic per day, with its
-images in the same folder. `prov journal new <topic>` creates it from the template:
+images in the same folder. `prov-journal new <topic>` creates it from the template:
 
 ```markdown
 ---
@@ -391,10 +394,10 @@ evidence: []                 # IDs or aliases this doc's claims rest on
 ## Next
 ```
 
-The journal's own rules live in `journal/README.md`, written by `prov init`. `journal/NOW.md` holds
+The journal's own rules live in `journal/README.md`, written by `prov-journal init`. `journal/NOW.md` holds
 the open threads, one table row each.
 
-`prov journal lint` checks:
+`prov-journal lint` checks:
 
 | Check | Rule |
 | --- | --- |
@@ -405,13 +408,13 @@ the open threads, one table row each.
 | `images` | every local `![...](file)` exists next to the doc |
 | `now` | each row of NOW.md's `## Open threads` table is at most 300 characters |
 
-`prov journal index` rewrites `journal/INDEX.md` (date, title, status, evidence count; newest
+`prov-journal index` rewrites `journal/INDEX.md` (date, title, status, evidence count; newest
 first). Don't edit it by hand.
 
 ## Sites
 
-`prov site build` turns the project journal (or any Markdown folder, such as `~/handbook`) into a
-static site with Quartz, under `<sites_dir>/<name>/`. `prov site serve` serves every built site:
+`prov-journal site build` turns the project journal (or any Markdown folder, such as `~/handbook`) into a
+static site with Quartz, under `<sites_dir>/<name>/`. `prov-journal site serve` serves every built site:
 
 - `/` lists the sites;
 - each site is at `/<name>/`;
@@ -422,12 +425,12 @@ static site with Quartz, under `<sites_dir>/<name>/`. `prov site serve` serves e
 
 ## Troubleshooting
 
-Errors print as `prov: <message>` and exit with code 2. Add `-v` to see debug logging.
+Errors print as `prov: <message>` (`prov-journal: <message>`) and exit with code 2. Add `-v` to see debug logging.
 
 | Message | Cause |
 | --- | --- |
 | `no machine config at ...` | create `~/.config/prov/config.toml` (README), or set `PROV_CONFIG` |
-| `no prov.toml in ... or its parents` | `prov run`, `prov journal` and `prov site build` without a folder need a project; `cd` into it or `prov init` |
+| `no prov.toml in ... or its parents` | `prov run`, `prov-journal` and `prov-journal site build` without a folder need a project; `cd` into it or `prov init` |
 | `not an alias: ...` | the reference isn't `kind:name/version` or `kind:name@label`, or the kind isn't one of the alias kinds |
 | `... already exists; versions never change` | pick the next version number, or move a label instead |
 | `... is already inside the store` | it's published already; `prov load` / `prov show` it |

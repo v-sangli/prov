@@ -1,7 +1,7 @@
 # 0002. DuckDB is the query engine, rebuilt from registry records only
 
 Status: Accepted (2026-11-10)
-Covers: `src/prov/storage/catalog.py`, `src/prov/*/tables.py`, `src/prov/lineage/`, `src/prov/cli/query.py`
+Covers: `packages/prov/src/prov/storage/catalog.py`, `packages/prov/src/prov/*/tables.py`, `packages/prov/src/prov/lineage/`, `packages/prov/src/prov/cli/query.py`
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -44,10 +44,10 @@ at query time ties queries to bytes that may be on another disk. Formerly design
 - Rules out writing anything only to the catalog.
 
 ## Enforced by
-- `tests/test_episodes.py::test_rebuild_from_scratch_is_identical`
-- `tests/test_episodes.py::test_connect_rebuilds_after_registry_changes`
-- `tests/test_datasets.py::test_catalog_tables_and_failure_query`
-- `tests/test_phase5.py::test_summary_recorded_later_values_win`
-- `tests/test_phase5.py::test_trace_figure_reaches_episodes_and_commits`
-- `tests/test_phase5.py::test_uses_session_reaches_figure`
-- `tests/test_extensions.py::test_new_catalog_table`
+- `packages/prov/tests/test_episodes.py::test_rebuild_from_scratch_is_identical`
+- `packages/prov/tests/test_episodes.py::test_connect_rebuilds_after_registry_changes`
+- `packages/prov/tests/test_datasets.py::test_catalog_tables_and_failure_query`
+- `packages/prov/tests/test_phase5.py::test_summary_recorded_later_values_win`
+- `packages/prov/tests/test_phase5.py::test_trace_figure_reaches_episodes_and_commits`
+- `packages/prov/tests/test_phase5.py::test_uses_session_reaches_figure`
+- `packages/prov/tests/test_extensions.py::test_new_catalog_table`

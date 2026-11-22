@@ -1,7 +1,7 @@
 # 0011. Docs are read remotely through Quartz sites served from this machine over Tailscale
 
 Status: Accepted (2026-11-09)
-Covers: `src/prov/integrations/site/`, `src/prov/cli/site.py`
+Covers: `packages/prov-journal/src/prov_journal/site/`, `packages/prov-journal/src/prov_journal/cli.py`
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -39,7 +39,7 @@ on R2), deferred until needed. Tailscale install and login on this machine are p
 - Rules out copying media into sites and binding a public port by default.
 
 ## Enforced by
-- `tests/test_site.py::test_pages_and_pretty_urls`
-- `tests/test_site.py::test_media_from_store_with_ranges`
-- `tests/test_site.py::test_nothing_outside_the_roots`, `::test_writes_are_refused`
-- `tests/test_site.py::test_build_journal_with_quartz` (skips without `tools/quartz`, including in CI)
+- `packages/prov-journal/tests/test_site.py::test_pages_and_pretty_urls`
+- `packages/prov-journal/tests/test_site.py::test_media_from_store_with_ranges`
+- `packages/prov-journal/tests/test_site.py::test_nothing_outside_the_roots`, `::test_writes_are_refused`
+- `packages/prov-journal/tests/test_site.py::test_build_journal_with_quartz` (skips without `tools/quartz`, including in CI)

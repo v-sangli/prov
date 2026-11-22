@@ -1,7 +1,7 @@
 # 0006. The journal is an Obsidian vault of Markdown in each project repo, checked by `prov journal lint`
 
-Status: Accepted (2026-11-10)
-Covers: `src/prov/journal/`, `src/prov/cli/journal.py`
+Status: Accepted (2026-11-10); amended by 0018 (moved)
+Covers: `packages/prov-journal/src/prov_journal/`, `packages/prov-journal/src/prov_journal/cli.py`
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -17,7 +17,7 @@ and a served site (ADR 0011). Formerly design decision D6.
   `journal/README.md` (the rules), `journal/NOW.md`, `journal/INDEX.md`, a `journal/media`
   symlink to `<store>/media`, `.gitignore` lines `journal/media` and
   `journal/.obsidian/workspace*.json`, and `.claude/skills/{journal,plotting}` symlinked to the
-  skills shipped in `src/prov/journal/skills/`.
+  skills shipped in `packages/prov-skills/src/prov_skills/`.
 - Docs live at `journal/<YYYY>/<MM>/<YYYY-MM-DD>-<topic>/README.md`, one per topic per day; the
   topic is lowercase words joined by `-`. `prov journal new <topic> [--continues <doc>]` writes
   one from `templates/doc.md`.
@@ -41,10 +41,10 @@ and a served site (ADR 0011). Formerly design decision D6.
 - Rules out citing evidence by path.
 
 ## Enforced by
-- `tests/test_journal.py::test_init_project`, `::test_new_doc`, `::test_continues_link_resolves`
-- `tests/test_journal.py::test_lint_evidence`
-- `tests/test_journal.py::test_lint_body_ids_images_and_frontmatter`
-- `tests/test_journal.py::test_lint_superseded_needs_link`, `::test_lint_now_thread_rows`
-- `tests/test_journal.py::test_index_lists_docs_newest_first`, `::test_cli`
-- `tests/test_extensions.py::test_new_lint_check`
+- `packages/prov/tests/test_init.py::test_init_project`, `packages/prov-journal/tests/test_journal.py::test_init_journal`, `packages/prov-skills/tests/test_install.py::test_install`, `::test_new_doc`, `::test_continues_link_resolves`
+- `packages/prov-journal/tests/test_journal.py::test_lint_evidence`
+- `packages/prov-journal/tests/test_journal.py::test_lint_body_ids_images_and_frontmatter`
+- `packages/prov-journal/tests/test_journal.py::test_lint_superseded_needs_link`, `::test_lint_now_thread_rows`
+- `packages/prov-journal/tests/test_journal.py::test_index_lists_docs_newest_first`, `::test_cli`
+- `packages/prov-journal/tests/test_lint_checks.py::test_new_lint_check`
 - Frozen past docs and verified/inferred marks: nothing mechanical; the user's review.

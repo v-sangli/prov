@@ -1,7 +1,7 @@
 # 0007. Plotting is our own module, `prov.plot`; figures4papers ideas only, no code copied
 
-Status: Accepted (2026-11-10)
-Covers: `src/prov/plot.py`, `src/prov/integrations/plot.py`, `src/prov/journal/skills/plotting/`
+Status: Accepted (2026-11-10); amended by 0018 (moved)
+Covers: `packages/prov-skills/src/prov_skills/plot/`, `packages/prov-skills/src/prov_skills/plot/`, `packages/prov-skills/src/prov_skills/plot/`
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -21,7 +21,7 @@ code is CC BY-NC 4.0. Formerly design decision D7.
   `caption`, `files`). Inside `prov run` it becomes the run's output.
 - `plot.to_journal(record, doc_dir)`: copies `<name>.png` next to a journal doc as
   `<fig_id>.png`.
-- A `plotting` agent skill ships in `src/prov/journal/skills/plotting/SKILL.md` and is linked
+- A `plotting` agent skill ships in `packages/prov-skills/src/prov_skills/plot/SKILL.md` and is linked
   into projects by `prov init`. Helpers for recurring figures wait until projects show which
   recur.
 - No figures4papers code is copied.
@@ -34,7 +34,7 @@ code is CC BY-NC 4.0. Formerly design decision D7.
 - Rules out copying figures4papers code.
 
 ## Enforced by
-- `tests/test_plot_rerun.py::test_style_applies_palette_and_restores`
-- `tests/test_plot_rerun.py::test_save_figure_and_journal_copy`
-- `tests/test_plot_rerun.py::test_rerun_reproduces_figure_byte_for_byte`
+- `packages/prov-skills/tests/test_plot.py::test_style_applies_palette_and_restores`
+- `packages/prov-skills/tests/test_plot.py::test_save_figure_and_journal_copy`
+- `packages/prov/tests/test_rerun.py::test_rerun_reproduces_file_byte_for_byte`
 - No copied figures4papers code: nothing mechanical; the user's review.

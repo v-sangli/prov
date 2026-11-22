@@ -1,7 +1,7 @@
 # 0004. IDs are ULIDs with a kind prefix; readable aliases sit on top
 
 Status: Accepted (2026-11-10)
-Covers: `src/prov/core/ids.py`, `src/prov/artifacts/aliases.py`, `src/prov/cli/artifacts.py` (`alias`)
+Covers: `packages/prov/src/prov/core/ids.py`, `packages/prov/src/prov/artifacts/aliases.py`, `packages/prov/src/prov/cli/artifacts.py` (`alias`)
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -49,11 +49,11 @@ Aliases (`artifacts/aliases.py`), two forms:
 - Rules out repointing a numbered version.
 
 ## Enforced by
-- `tests/test_ids.py::test_format_and_kind`, `::test_unique`, `::test_sorts_by_creation_time`,
+- `packages/prov/tests/test_ids.py::test_format_and_kind`, `::test_unique`, `::test_sorts_by_creation_time`,
   `::test_rejects_bad_ids`
-- `tests/test_datasets.py::test_parse`, `::test_parse_rejects`
-- `tests/test_datasets.py::test_versions_never_change`
-- `tests/test_datasets.py::test_labels_move_and_history_is_git_log`
-- `tests/test_datasets.py::test_resolve`
-- `tests/test_datasets.py::test_publish_alias_checked_before_moving`
-- `tests/test_datasets.py::test_cli_dataset_and_alias`
+- `packages/prov/tests/test_datasets.py::test_parse`, `::test_parse_rejects`
+- `packages/prov/tests/test_datasets.py::test_versions_never_change`
+- `packages/prov/tests/test_datasets.py::test_labels_move_and_history_is_git_log`
+- `packages/prov/tests/test_datasets.py::test_resolve`
+- `packages/prov/tests/test_datasets.py::test_publish_alias_checked_before_moving`
+- `packages/prov/tests/test_datasets.py::test_cli_dataset_and_alias`

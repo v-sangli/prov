@@ -1,7 +1,7 @@
 # 0010. No backup disk is assumed; git repos pushed to private GitHub remotes are the only off-machine copy
 
 Status: Accepted (2026-11-10)
-Covers: `src/prov/runs/snapshot.py` (ref push), `src/prov/storage/registry.py`
+Covers: `packages/prov/src/prov/runs/snapshot.py` (ref push), `packages/prov/src/prov/storage/registry.py`
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -31,6 +31,6 @@ a disk failure). Results today exist only in the store.
 - Rules out cloud storage of artifact bytes.
 
 ## Enforced by
-- `tests/test_gitsnap.py::test_ref_reaches_remote`
-- `tests/test_run.py::test_run_writes_record_and_commits_it` (`pushed` true with an origin)
+- `packages/prov/tests/test_gitsnap.py::test_ref_reaches_remote`
+- `packages/prov/tests/test_run.py::test_run_writes_record_and_commits_it` (`pushed` true with an origin)
 - Registry push and the absence of a backup: nothing mechanical; the user's review.

@@ -1,7 +1,7 @@
 # 0013. Record schemas are pydantic models, closed to unknown fields
 
 Status: Accepted (2026-11-09); amended by 0017 (W&B removed)
-Covers: `src/prov/core/schema.py`, `src/prov/runs/schema.py`, `src/prov/artifacts/schema.py`, `src/prov/episodes/schema.py`
+Covers: `packages/prov/src/prov/core/schema.py`, `packages/prov/src/prov/runs/schema.py`, `packages/prov/src/prov/artifacts/schema.py`, `packages/prov/src/prov/episodes/schema.py`
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -43,7 +43,7 @@ code snapshot, not the record.
 ## Enforced by
 - `prov.core.schema.Record` (`extra="forbid"`) rejects unknown fields on every load; no test
   pins it directly.
-- `tests/test_store.py::test_checkpoint_gets_manifest` (manifest validates as the record)
-- `tests/test_run.py::test_run_writes_record_and_commits_it`, `::test_failed_command_status_and_exit_code`,
+- `packages/prov/tests/test_store.py::test_checkpoint_gets_manifest` (manifest validates as the record)
+- `packages/prov/tests/test_run.py::test_run_writes_record_and_commits_it`, `::test_failed_command_status_and_exit_code`,
   `::test_missing_command_binary`
-- `tests/test_episodes.py::test_ingest_v3_session` (`read_episodes` round-trips)
+- `packages/prov/tests/test_episodes.py::test_ingest_v3_session` (`read_episodes` round-trips)

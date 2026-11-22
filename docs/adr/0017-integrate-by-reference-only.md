@@ -1,7 +1,7 @@
 # 0017. prov integrates by reference only; the W&B integration and the event system go
 
 Status: Accepted (2026-11-21)
-Covers: `src/prov/api.py`, `src/prov/core/runenv.py`, `src/prov/core/extensions.py`, `src/prov/runs/`, `src/prov/wiring.py`
+Covers: `packages/prov/src/prov/api.py`, `packages/prov/src/prov/core/runenv.py`, `packages/prov/src/prov/core/extensions.py`, `packages/prov/src/prov/runs/`, `packages/prov/src/prov/wiring.py`
 PR: https://github.com/v-sangli/prov/pull/4
 
 ## Context
@@ -44,7 +44,7 @@ Supersedes ADR 0003. Amends:
 
 ## Enforced by
 
-- `tests/test_run.py::test_refs_outside_a_run_raises`
-- `tests/test_run.py::test_refs_inside_a_run_lists_run_project_and_inputs`
-- `tests/test_layers.py::test_imports_go_down`, together with the `wandb` extra being gone: an
+- `packages/prov/tests/test_run.py::test_refs_outside_a_run_raises`
+- `packages/prov/tests/test_run.py::test_refs_inside_a_run_lists_run_project_and_inputs`
+- `packages/prov/tests/test_layers.py::test_imports_go_down`, together with the `wandb` extra being gone: an
   import of `wandb` anywhere in prov fails in CI.
