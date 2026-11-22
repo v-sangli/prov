@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-22)
 Covers: `scripts/pr_gate.py`, `.github/workflows/ci.yml`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/9
 
 ## Context
 
