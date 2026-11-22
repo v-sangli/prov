@@ -15,6 +15,7 @@ from prov.core.errors import DatasetError
 from prov.core.ids import new_id
 from prov.datasets.split import BY, split
 from prov.storage import catalog, registry
+from prov.storage.lock import RegistryLock
 
 
 def _select(ctx, episodes: list[str] | None, query: str | None) -> tuple[list[str], dict[str, str]]:
@@ -49,33 +50,34 @@ def freeze(ctx, name: str, episodes: list[str] | None = None, query: str | None 
     ids, known = _select(ctx, episodes, query)
     parent_id = aliases.resolve(ctx, parent) if parent else None
 
-    existing = [int(v) for v in aliases.versions(ctx, "ds", name) if v.isdigit()]
-    version = str(max(existing, default=0) + 1)
-    parts = {"all": (name, ids)}
-    if holdout is not None:
-        train, held = split(ids, known, holdout, seed, by)
-        parts |= {"train": (f"{name}-train", train), "holdout": (f"{name}-holdout", held)}
-        for _, (n, _) in list(parts.items())[1:]:
-            if version in aliases.versions(ctx, "ds", n):
-                raise DatasetError(f"ds:{n}/{version} already exists")
+    with RegistryLock(ctx.registry):   # from version pick to alias: no orphans, no reused N
+        existing = [int(v) for v in aliases.versions(ctx, "ds", name) if v.isdigit()]
+        version = str(max(existing, default=0) + 1)
+        parts = {"all": (name, ids)}
+        if holdout is not None:
+            train, held = split(ids, known, holdout, seed, by)
+            parts |= {"train": (f"{name}-train", train), "holdout": (f"{name}-holdout", held)}
+            for _, (n, _) in list(parts.items())[1:]:
+                if version in aliases.versions(ctx, "ds", n):
+                    raise DatasetError(f"ds:{n}/{version} already exists")
 
-    ds_ids = {role: new_id("dataset") for role in parts}
-    now = datetime.now(timezone.utc)
-    out = {}
-    for role, (n, eps) in parts.items():
-        ref = f"ds:{n}/{version}"
-        record = ArtifactRecord(
-            id=ds_ids[role], kind="dataset", uri=None, created=now, meta={
-                "alias": ref, "name": n, "version": version, "role": role, "parent": parent_id,
-                "siblings": {r: i for r, i in ds_ids.items() if r != role},
-                "episodes": len(eps), "sessions": len({known[e] for e in eps}),
-                "selection": {"query": query} if query else {"episodes": "explicit list"},
-                "split": {"holdout": holdout, "seed": seed, "by": by} if holdout is not None else None,
-                "notes": notes,
-            })
-        mpath = registry.write(ctx.registry, layout.dataset_members(record.id), "".join(e + "\n" for e in eps))
-        rpath = write_record(ctx, record)
-        registry.commit(ctx.registry, [mpath, rpath], f"dataset {ref}: {len(eps)} episodes")
-        aliases.set_version(ctx, ref, record.id)
-        out[role] = record
+        ds_ids = {role: new_id("dataset") for role in parts}
+        now = datetime.now(timezone.utc)
+        out = {}
+        for role, (n, eps) in parts.items():
+            ref = f"ds:{n}/{version}"
+            record = ArtifactRecord(
+                id=ds_ids[role], kind="dataset", uri=None, created=now, meta={
+                    "alias": ref, "name": n, "version": version, "role": role, "parent": parent_id,
+                    "siblings": {r: i for r, i in ds_ids.items() if r != role},
+                    "episodes": len(eps), "sessions": len({known[e] for e in eps}),
+                    "selection": {"query": query} if query else {"episodes": "explicit list"},
+                    "split": {"holdout": holdout, "seed": seed, "by": by} if holdout is not None else None,
+                    "notes": notes,
+                })
+            mpath = registry.write(ctx.registry, layout.dataset_members(record.id), "".join(e + "\n" for e in eps))
+            rpath = write_record(ctx, record)
+            registry.commit(ctx.registry, [mpath, rpath], f"dataset {ref}: {len(eps)} episodes")
+            aliases._set_version(ctx, ref, record.id)
+            out[role] = record
     return out
