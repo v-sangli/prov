@@ -17,6 +17,15 @@ CREATE TABLE run_tags (run VARCHAR, key VARCHAR, value VARCHAR);
 CREATE TABLE run_summary (run VARCHAR, key VARCHAR, value DOUBLE, text VARCHAR);
 """
 
+# Lineage: a run is labelled with its kind, project, status and code; its inputs flow into it.
+NODES = """
+SELECT r.id, r.id || '  ' || r.kind || ' run, ' || r.project || ', ' || r.status || ' [' || coalesce(
+    string_agg(c.repo || '@' || left(c.base, 10) || CASE WHEN c.dirty THEN ' dirty' ELSE '' END, ', '
+               ORDER BY c.repo), '') || ']' AS label
+FROM runs r LEFT JOIN run_code c ON c.run = r.id GROUP BY r.id, r.kind, r.project, r.status
+"""
+EDGES = "SELECT artifact AS src, 'input' AS rel, run AS dst FROM run_inputs"
+
 
 def rows(ctx) -> dict[str, list[tuple]]:
     runs = records.all_runs(ctx)
@@ -33,4 +42,4 @@ def rows(ctx) -> dict[str, list[tuple]]:
     }
 
 
-TABLES = CatalogTables("runs", DDL, rows)
+TABLES = CatalogTables("runs", DDL, rows, NODES, EDGES)

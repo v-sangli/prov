@@ -27,6 +27,7 @@ episodes, datasets, checkpoints, results, figures, and the runs that made them. 
 | **Dataset version** | a frozen list of episode IDs, named `ds:<name>/<n>`. Nothing is copied. | `registry/datasets/<ds_id>.txt` |
 | **Project** | a repo with a `prov.toml`: its name and the repos to snapshot on each run. | the project repo |
 | **Journal** | dated Markdown docs in the project repo, citing IDs as evidence. | `<project>/journal/` |
+| **Doc** | a Markdown file in a git repo, registered with a `doc_` ID (its frontmatter `id:`) and the IDs it cites. Journal docs are docs. | file in its repo, record in `registry/records/docs/` |
 
 ## Workflow, start to finish
 
@@ -155,14 +156,15 @@ plot.to_journal(rec, "journal/2026/11/2026-11-12-hand-closure")    # copies fig_
 Write the doc, cite the figure and results in `evidence:`, then check it:
 
 ```bash
-prov-journal lint && prov-journal index
+prov-journal lint && prov-journal index && prov-journal register
 ```
 
 **8. Trace it back**:
 
 ```bash
 prov trace fig_<ULID>        # figure <- analysis run <- results <- eval run <- checkpoint <- ... <- sessions
-prov uses ses_<ULID>         # every dataset, run and artifact built on a session
+prov uses ses_<ULID>         # every dataset, run, artifact and doc built on a session
+prov trace doc_<ULID>        # what a journal doc rests on
 prov rerun run_<ULID>        # same command on the exact recorded code
 ```
 
@@ -177,7 +179,7 @@ prov rerun run_<ULID>        # same command on the exact recorded code
 | `ep_` | episode | `vid_` | video |
 | `ds_` | dataset version | `raw_` | raw recording (MCAP) |
 | `ckpt_` | checkpoint | `calib_` | calibration |
-| `bench_` | benchmark | | |
+| `bench_` | benchmark | `doc_` | doc |
 
 **Aliases** are readable names for artifact IDs:
 
@@ -277,16 +279,37 @@ prov dataset freeze <name> (--query SQL | --episodes FILE) [--parent REF] [--not
 ```
 prov q "<SQL>"                 tab-separated, with a header row
 prov trace <ID or alias>       upstream: what it was made from, down to sessions and code commits
-prov uses <ID or alias>        downstream: every run, dataset and artifact built on it
+prov uses <ID or alias>        downstream: every run, dataset, artifact and doc built on it
 prov catalog rebuild           force a rebuild (normally automatic)
 ```
 
-Lineage edges:
+Lineage edges (the catalog's `edges` view):
 - artifact ← the run that produced it;
 - run ← its inputs;
-- dataset ← its parent and the sessions of its episodes.
+- dataset ← its parent and the sessions of its episodes;
+- doc ← every ID it cites.
 
 A node reached twice is shown as `(see above)`.
+
+### Docs
+
+```
+prov doc register <path> [<path> ...]   register Markdown docs; prints each doc_ ID
+prov show doc_<ULID>                     the doc record and its versions
+```
+
+- **What a doc is:** a Markdown file inside a git repo. Its ID is `id:` in its frontmatter;
+  `register` writes one (adding frontmatter if there is none) the first time.
+- **Citations:** every prov ID and alias anywhere in the file, frontmatter or body. Aliases
+  resolve to IDs; the doc's own ID is not a citation. A cited ID or alias that is not in the
+  registry fails the registration, and the file is left as it was.
+- **The record:** repo (directory name), its `origin` URL (or none), the path in the repo, the
+  title (first `# ` heading, else the file name), and versions. A version is (last commit that
+  touched the file or none, dirty, registered time, cites); one is appended only when commit,
+  dirty or cites changed.
+- **A loose file** (in no git repo) is refused: fold it into a journal doc first.
+- Registration is explicit: nothing registers a doc on its own. `prov-journal register`
+  registers every dated journal doc.
 
 ### Project and journal
 
@@ -296,6 +319,7 @@ prov-journal init              journal/ skeleton, journal/media link, .gitignore
 prov-journal new <topic> [--continues <doc folder, relative to journal/>]
 prov-journal lint              exits 1 when there are problems
 prov-journal index             rewrites journal/INDEX.md
+prov-journal register          registers every dated doc (prov doc register); prints each ID
 prov-journal site build [<folder>] [--name NAME]
 prov-journal site serve [--host 127.0.0.1|tailscale|ADDR] [--port 8090] [--rebuild-every 300]
 prov-skills install <project>  links every skill into <project>/.claude/skills/
@@ -350,6 +374,10 @@ The catalog has these tables. Timestamps are naive UTC; `meta` is JSON (`meta->>
 | `annotation_log` | `episode, key, value, time` (every label ever set) |
 | `annotations` (view) | `episode, key, value, time` (latest value per episode and key) |
 | `dataset_members` | `dataset, alias, episode` |
+| `docs` | `id, repo, remote, path, title, created` |
+| `doc_cites` | `doc, target` (what each doc's latest version cites) |
+| `nodes` (view) | `id, label`: every lineage node and how `trace` / `uses` print it |
+| `edges` (view) | `src, rel, dst, ord`: lineage, `dst` made from or resting on `src`; `rel` is `input`, `produced`, `parent`, `member` or `cites`; `ord` orders a node's neighbours |
 
 Examples:
 
@@ -367,6 +395,10 @@ WHERE r.kind = 'eval' ORDER BY r.started DESC;
 -- which runs trained on a dataset version
 SELECT i.run FROM run_inputs i JOIN aliases a ON a.id = i.artifact WHERE a.ref = 'ds:cube-pick-train/1';
 
+-- docs citing a checkpoint
+SELECT d.path, d.title FROM doc_cites c JOIN docs d ON d.id = c.doc
+JOIN aliases a ON a.id = c.target WHERE a.ref = 'model:cube-pick/0.3';
+
 -- episodes per session with total minutes
 SELECT session, count(*) AS episodes, round(sum(duration_s) / 60, 1) AS minutes
 FROM episodes GROUP BY session ORDER BY session;
@@ -379,6 +411,7 @@ images in the same folder. `prov-journal new <topic>` creates it from the templa
 
 ```markdown
 ---
+id: doc_01JC...              # the doc's ID (set by prov-journal new)
 date: 2026-11-12
 status: open                 # open | concluded | superseded
 continues: null              # path to the doc this one continues (set by --continues)
@@ -411,6 +444,9 @@ the open threads, one table row each.
 `prov-journal index` rewrites `journal/INDEX.md` (date, title, status, evidence count; newest
 first). Don't edit it by hand.
 
+`prov-journal register` registers every dated doc as a prov doc (see [Docs](#docs)), so
+`prov trace doc_<ULID>` shows what a doc rests on and `prov uses <ID>` lists the docs citing it.
+
 ## Sites
 
 `prov-journal site build` turns the project journal (or any Markdown folder, such as `~/handbook`) into a
@@ -434,6 +470,8 @@ Errors print as `prov: <message>` (`prov-journal: <message>`) and exit with code
 | `not an alias: ...` | the reference isn't `kind:name/version` or `kind:name@label`, or the kind isn't one of the alias kinds |
 | `... already exists; versions never change` | pick the next version number, or move a label instead |
 | `... is already inside the store` | it's published already; `prov load` / `prov show` it |
+| `... cites what is not in the registry: ...` | a doc names an ID that doesn't exist; fix the ID or register the thing first |
+| `... is in no git repo; fold it into a journal first` | `prov doc register` takes files in a git repo; move the note into a new journal doc |
 | `not registered episodes: [...]` | the query or file names IDs that aren't episodes; check the query's first column |
 | `warning: only N GB free on the store disk` | under 50 GB free; publishing continues, but clean up |
 | ``summary outside `prov run`; not recorded`` | `prov.summary` was called from a plain script or notebook |

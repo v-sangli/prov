@@ -4,7 +4,7 @@
         Move (or copy) a file or folder into the store under a new ID, make it read-only, record it.
 
     prov show <id or alias>
-        Print a run or artifact record (and an artifact's store path).
+        Print a run, doc or artifact record (and an artifact's store path).
 
     prov alias set <kind:name/version> <ID>        a version: set once, never changes
     prov alias label <kind:name@label> <kind:name/version>   move a label
@@ -18,6 +18,7 @@ from prov.cli.common import pairs
 from prov.core import layout
 from prov.core.errors import ConfigError
 from prov.core.ids import kind_of
+from prov.docs import register as docs
 from prov.runs import records
 
 
@@ -34,6 +35,9 @@ def cmd_show(args, get_ctx) -> int:
     if kind_of(id_) == "run":
         records.load(ctx, id_)                          # raises when there is no record
         print(records.path(ctx, id_).read_text(), end="")
+        return 0
+    if kind_of(id_) == "doc":
+        print(docs.load(ctx, id_).to_yaml(), end="")
         return 0
     record = publish.load(ctx, id_)
     print(record.to_yaml(), end="")
@@ -63,7 +67,7 @@ def register(sub, ext) -> None:
     pub.add_argument("--copy", action="store_true", help="copy instead of move")
     pub.add_argument("--alias", help="also name it kind:name/version")
     pub.set_defaults(func=cmd_publish)
-    show = sub.add_parser("show", help="print a run or artifact record")
+    show = sub.add_parser("show", help="print a run, doc or artifact record")
     show.add_argument("id")
     show.set_defaults(func=cmd_show)
     al = sub.add_parser("alias", help="readable names for IDs")

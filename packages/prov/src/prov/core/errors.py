@@ -41,6 +41,10 @@ class RerunError(ProvError):
     pass
 
 
+class DocError(ProvError):
+    pass
+
+
 class JournalError(ProvError):
     pass
 

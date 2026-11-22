@@ -1,6 +1,6 @@
 # 0002. DuckDB is the query engine, rebuilt from registry records only
 
-Status: Accepted (2026-11-10)
+Status: Accepted (2026-11-10); amended by 0019 (rebuild also on table changes)
 Covers: `packages/prov/src/prov/storage/catalog.py`, `packages/prov/src/prov/*/tables.py`, `packages/prov/src/prov/lineage/`, `packages/prov/src/prov/cli/query.py`
 PR: https://github.com/v-sangli/prov/pull/2
 

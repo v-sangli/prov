@@ -11,7 +11,7 @@ LAYERS = {
     "prov.core": 0,
     "prov.storage": 1,
     "prov.runs": 2, "prov.artifacts": 2,
-    "prov.episodes": 3,
+    "prov.episodes": 3, "prov.docs": 3,
     "prov.datasets": 4,
     "prov.lineage": 5,
     "prov.wiring": 7,

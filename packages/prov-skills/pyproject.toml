@@ -1,6 +1,6 @@
 [project]
 name = "prov-skills"
-version = "0.1.0"
+version = "0.1.1"
 description = "Agent skills for prov projects: plot (house style, figures) and journal"
 requires-python = ">=3.11"
 dependencies = ["prov"]

@@ -6,6 +6,7 @@ registry/
     records/artifacts/<kind>/<id>.yaml
     records/episodes/<ses_id>.jsonl          one EpisodeRecord per line
     records/annotations/<ses_id>.jsonl       one Annotation per line, append-only
+    records/docs/<doc_id>.yaml               a doc and its versions
     datasets/<ds_id>.txt                     member episode IDs, one per line
     aliases/<alias kind>/<name>.yaml         versions and labels
     .prov.lock                               the write lock (untracked)
@@ -19,6 +20,7 @@ RUNS_DIR = "records/runs"
 ARTIFACTS_DIR = "records/artifacts"
 EPISODES_DIR = "records/episodes"
 ANNOTATIONS_DIR = "records/annotations"
+DOCS_DIR = "records/docs"
 DATASETS_DIR = "datasets"
 ALIASES_DIR = "aliases"
 
@@ -56,6 +58,10 @@ def episodes_file(session_id: str) -> str:
 
 def annotations_file(session_id: str) -> str:
     return f"{ANNOTATIONS_DIR}/{session_id}.jsonl"
+
+
+def doc_record(doc_id: str) -> str:
+    return f"{DOCS_DIR}/{doc_id}.yaml"
 
 
 def dataset_members(ds_id: str) -> str:

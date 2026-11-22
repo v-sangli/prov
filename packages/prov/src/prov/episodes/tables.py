@@ -16,6 +16,9 @@ CREATE VIEW annotations AS
     FROM annotation_log GROUP BY episode, key;
 """
 
+# Lineage: an episode is a node (docs cite episodes); it has no edges of its own.
+NODES = "SELECT id, id || '  episode' AS label FROM episodes"
+
 
 def _lines(folder, model):
     for p in sorted(folder.glob("*.jsonl")):
@@ -35,4 +38,4 @@ def rows(ctx) -> dict[str, list[tuple]]:
     }
 
 
-TABLES = CatalogTables("episodes", DDL, rows)
+TABLES = CatalogTables("episodes", DDL, rows, NODES)

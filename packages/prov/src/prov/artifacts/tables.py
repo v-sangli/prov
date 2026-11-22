@@ -16,6 +16,19 @@ CREATE TABLE aliases (ref VARCHAR PRIMARY KEY, kind VARCHAR, name VARCHAR, versi
 CREATE TABLE alias_labels (ref VARCHAR PRIMARY KEY, kind VARCHAR, name VARCHAR, label VARCHAR, version VARCHAR);
 """
 
+# Lineage: an artifact is labelled with its aliases and kind (sessions and datasets with their
+# episode counts); its producing run flows into it.
+NODES = """
+SELECT a.id, a.id || coalesce('  ' || (SELECT string_agg(ref, ' ' ORDER BY ref) FROM aliases WHERE id = a.id), '')
+    || '  ' || a.kind || CASE a.kind
+        WHEN 'dataset' THEN (SELECT ', ' || count(*) || ' episodes in ' || count(DISTINCT e.session) || ' sessions'
+                             FROM dataset_members m JOIN episodes e ON e.id = m.episode WHERE m.dataset = a.id)
+        WHEN 'session' THEN (SELECT ', ' || count(*) || ' episodes' FROM episodes WHERE session = a.id)
+        ELSE '' END AS label
+FROM artifacts a
+"""
+EDGES = "SELECT produced_by AS src, 'produced' AS rel, id AS dst FROM artifacts WHERE produced_by IS NOT NULL"
+
 
 def rows(ctx) -> dict[str, list[tuple]]:
     vrows, lrows = aliases.all_aliases(ctx)
@@ -27,4 +40,4 @@ def rows(ctx) -> dict[str, list[tuple]]:
     }
 
 
-TABLES = CatalogTables("artifacts", DDL, rows)
+TABLES = CatalogTables("artifacts", DDL, rows, NODES, EDGES)

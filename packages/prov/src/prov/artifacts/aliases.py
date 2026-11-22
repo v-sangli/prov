@@ -23,6 +23,10 @@ KINDS = {"ds": "dataset", "model": "checkpoint", "bench": "benchmark", "calib": 
          "ses": "session", "res": "result", "fig": "figure"}
 _REF = re.compile(r"^(?P<kind>[a-z]+):(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)(?:/(?P<version>[0-9][A-Za-z0-9.]*)|@(?P<label>[A-Za-z][A-Za-z0-9._-]*))$")
 
+# Any alias inside free text (doc citations); a version or label never ends in "." or "-".
+ALIAS_RE = re.compile(r"\b(?:" + "|".join(KINDS) + r"):[A-Za-z0-9][A-Za-z0-9._-]*"
+                      r"(?:/[0-9](?:[A-Za-z0-9.]*[A-Za-z0-9])?|@[A-Za-z](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)")
+
 
 def parse(ref: str) -> tuple[str, str, str | None, str | None]:
     """(kind, name, version, label); exactly one of version/label is set."""

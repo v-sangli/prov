@@ -7,6 +7,7 @@ from prov.artifacts import tables as artifact_tables
 from prov.core.context import Context
 from prov.core.extensions import Extensions
 from prov.datasets import tables as dataset_tables
+from prov.docs import tables as doc_tables
 from prov.episodes import tables as episode_tables
 from prov.episodes.formats import lerobot
 from prov.runs import tables as run_tables
@@ -14,7 +15,8 @@ from prov.runs import tables as run_tables
 
 def extensions() -> Extensions:
     return Extensions(
-        tables=[run_tables.TABLES, artifact_tables.TABLES, episode_tables.TABLES, dataset_tables.TABLES],
+        tables=[run_tables.TABLES, artifact_tables.TABLES, episode_tables.TABLES, dataset_tables.TABLES,
+                doc_tables.TABLES],
         formats={lerobot.FORMAT.name: lerobot.FORMAT},
     )
 
