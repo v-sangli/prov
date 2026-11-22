@@ -80,3 +80,20 @@ lint rule is a module in `journal/lint/` exposing a `LintCheck`; new catalog tab
 `CatalogTables`; a new integration subscribes to `artifact.published`, `artifact.loaded` or
 `run.summary`. Each is then one line in `wiring.py`. A CLI group is a module in `cli/` with
 `register`, listed in `cli/main.py`.
+
+## Variation axes
+
+The dimensions along which `prov` expects more than one variant. Each has a fixed interface
+in `prov.core.extensions` and is registered in `wiring.py`:
+
+- recording formats (`IngestFormat`); one today: LeRobot
+- catalog tables (`CatalogTables`)
+- journal lint rules (`LintCheck`)
+- event subscribers (`artifact.published`, `artifact.loaded`, `run.summary`); one today: W&B
+- CLI command groups (`cli/`)
+
+## Repo
+
+CI (`.github/workflows/ci.yml`) runs ruff and the test suite on every PR and push to `main`;
+the Quartz site test skips there, as it needs `tools/quartz` beside the repo. Deviations are
+registered in `DEVIATIONS.md`.
