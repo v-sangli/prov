@@ -1,7 +1,7 @@
 """The DuckDB catalog: an index rebuilt from the registry. Deleting it loses nothing.
 
 The tables are declared by the CatalogTables in `ctx.ext.tables` (one bundle per domain:
-runs, artifacts, episodes, datasets); this module only builds and opens the database.
+runs, artifacts, episodes, datasets, docs); this module only builds and opens the database.
 The bundles' lineage SQL becomes two views: `nodes (id, label)` and `edges (src, rel, dst, ord)`,
 the unions of what each bundle contributes; `ord` is the bundle's position in `ctx.ext.tables`,
 which orders a node's neighbours (lineage sorts by `ord`, then ID).

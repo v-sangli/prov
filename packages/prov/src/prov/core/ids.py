@@ -18,6 +18,7 @@ PREFIXES = {
     "video": "vid",
     "raw": "raw",
     "calibration": "calib",
+    "doc": "doc",
 }
 
 _CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
