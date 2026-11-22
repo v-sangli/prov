@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-21)
 Covers: `src/prov/storage/lock.py`, `src/prov/core/layout.py`, `src/prov/artifacts/publish.py`, `src/prov/artifacts/aliases.py`, `src/prov/datasets/freeze.py`, `src/prov/episodes/ingest.py`, `src/prov/episodes/annotate.py`, `src/prov/runs/records.py`, `src/prov/storage/catalog.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/3 (spec f0dd585, plan d78538a)
 
 ## Context
 
