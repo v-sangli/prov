@@ -5,7 +5,7 @@ Provenance for robot-learning research, as three packages in one uv workspace. D
 
 | Package | Import | CLI | What it is |
 | --- | --- | --- | --- |
-| `packages/prov` | `prov` | `prov` | the core: IDs, provenance records, a local store, datasets of episodes, lineage |
+| `packages/prov` | `prov` | `prov` | the core: IDs, provenance records, a local store, datasets of episodes, docs, lineage |
 | `packages/prov-journal` | `prov_journal` | `prov-journal` | the project journal: docs, lint, index, Quartz sites |
 | `packages/prov-skills` | `prov_skills` | `prov-skills` | agent skills: `plot` (house style, figures) and `journal` |
 
@@ -59,7 +59,7 @@ prov init <project-name>      # prov.toml
 prov-journal init             # journal/, journal/media link, .gitignore lines
 prov-skills install .         # .claude/skills/{plot,journal}
 prov run --kind train -- python train.py
-prov-journal new <topic>; prov-journal lint; prov-journal index
+prov-journal new <topic>; prov-journal lint; prov-journal index; prov-journal register
 prov-journal site build && prov-journal site serve
 ```
 
@@ -80,8 +80,9 @@ Layers, lowest first. A package imports only from its own layer's lower rungs
 | 2 | `prov.runs` | run records, code snapshots, `prov run` lifecycle, rerun, run tables |
 | 2 | `prov.artifacts` | artifact records, publish / load, aliases, artifact tables |
 | 3 | `prov.episodes` | episode records, ingest formats (`formats/lerobot`), ingest, annotate, episode tables |
+| 3 | `prov.docs` | doc records (`doc_` IDs, versions, cites), `prov doc register`, doc tables |
 | 4 | `prov.datasets` | freeze, split, members, dataset table |
-| 5 | `prov.lineage` | trace / uses |
+| 5 | `prov.lineage` | trace / uses, walking the catalog's `nodes` and `edges` views |
 | 7 | `prov.wiring` | the built-in extensions: catalog tables, ingest formats |
 | 8 | `prov.api` | the public Python API (`import prov`) |
 | 9 | `prov.cli` | the command line, one module per command group |
@@ -97,7 +98,7 @@ Library functions take a `Context` (`prov.context()`) first; the public API and 
 | `prov_journal.lint` | `prov-journal lint`: `LintCheck`, `CHECKS`, one rule per module |
 | `prov_journal.templates` | journal README / NOW / doc templates |
 | `prov_journal.site` | Quartz site build and the server that adds store media |
-| `prov_journal.cli` | the `prov-journal` command line |
+| `prov_journal.cli` | the `prov-journal` command line (`register` registers every dated doc via `prov.docs`) |
 
 ### prov-skills
 
@@ -118,8 +119,8 @@ reference: they carry prov IDs (`prov.refs()`) in their own configs; prov import
 The dimensions along which each package expects more than one variant:
 
 - prov: recording formats (`IngestFormat`, one today: LeRobot), catalog tables
-  (`CatalogTables`), both in `prov.core.extensions` and registered in `wiring.py`; CLI command
-  groups (`prov/cli/`)
+  (`CatalogTables`, each also contributing lineage `nodes` and `edges` SQL), both in
+  `prov.core.extensions` and registered in `wiring.py`; CLI command groups (`prov/cli/`)
 - prov-journal: journal lint rules (`LintCheck`, listed in `prov_journal.lint.CHECKS`)
 - prov-skills: skills (one directory each; adding one touches nothing else)
 
