@@ -78,7 +78,7 @@ def test_every_module_has_a_layer():
 
 def test_library_code_does_not_print():
     offenders = [m for m, p in MODULES.items() if _unit(m) not in ("prov.cli",)
-                 and any(isinstance(n, ast.Call) and getattr(n.func, "id", None) == "print"
+                 and any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "print"
                          for n in ast.walk(ast.parse(p.read_text())))]
     assert offenders == []
 
