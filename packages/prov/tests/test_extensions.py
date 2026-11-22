@@ -34,3 +34,18 @@ def test_new_catalog_table(ctx):
     with catalog.connect(ctx) as con:
         assert con.execute("SELECT k FROM notes ORDER BY k").fetchall() == [("a",), ("b",)]
         assert con.execute("SELECT count(*) FROM runs").fetchone() == (0,)
+
+
+def test_new_catalog_edges_join_lineage(ctx):
+    from prov.lineage import graph
+    a, b = "fig_" + "0" * 26, "fig_" + "1" * 26
+    extra = CatalogTables("links", "CREATE TABLE links (src VARCHAR, dst VARCHAR);",
+                          lambda c: {"links": [(a, b)]},
+                          nodes=f"SELECT '{a}' AS id, 'A' AS label UNION ALL SELECT '{b}', 'B'",
+                          edges="SELECT src, 'link' AS rel, dst FROM links")
+    ctx = _with(ctx, tables=[*ctx.ext.tables, extra])
+    catalog.rebuild(ctx)
+    assert graph.trace(ctx, b) == [(0, b, "B"), (1, a, "A")]
+    assert graph.uses(ctx, a) == [(0, a, "A"), (1, b, "B")]
+    with catalog.connect(ctx) as con:
+        assert con.execute("SELECT src, rel, dst FROM edges WHERE rel = 'link'").fetchall() == [(a, "link", b)]

@@ -2,6 +2,9 @@
 
 The tables are declared by the CatalogTables in `ctx.ext.tables` (one bundle per domain:
 runs, artifacts, episodes, datasets); this module only builds and opens the database.
+The bundles' lineage SQL becomes two views: `nodes (id, label)` and `edges (src, rel, dst, ord)`,
+the unions of what each bundle contributes; `ord` is the bundle's position in `ctx.ext.tables`,
+which orders a node's neighbours (lineage sorts by `ord`, then ID).
 `catalog_meta` records the registry HEAD the catalog was built from; `connect()` rebuilds first
 when the registry has moved since. All timestamps are naive UTC.
 """
@@ -40,6 +43,11 @@ def rebuild(ctx) -> Path:
         for bundle in ctx.ext.tables:
             for table, rows in bundle.rows(ctx).items():
                 _insert(con, table, list(rows))
+        bundles = ctx.ext.tables
+        con.execute("CREATE VIEW nodes AS " + " UNION ALL ".join(
+            f"SELECT id, label FROM ({b.nodes})" for b in bundles if b.nodes))
+        con.execute("CREATE VIEW edges AS " + " UNION ALL ".join(
+            f"SELECT src, rel, dst, {i} AS ord FROM ({b.edges})" for i, b in enumerate(bundles) if b.edges))
         con.execute("CREATE TABLE catalog_meta (registry_head VARCHAR)")
         con.execute("INSERT INTO catalog_meta VALUES (?)", [registry.head(ctx.registry)])
         con.close()
