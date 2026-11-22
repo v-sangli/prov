@@ -4,11 +4,10 @@
 `prov run` folds the files into the run record when the process exits.
 
     PROV_RUN_ID        the run's ID; artifacts published inside get `produced_by` = this
-    PROV_PROJECT       the project name (default W&B project)
+    PROV_PROJECT       the project name
     PROV_RUN_INPUTS    file: one artifact ID per line, appended by prov.load
     PROV_RUN_OUTPUTS   file: one artifact ID per line, appended by prov.publish
     PROV_RUN_SUMMARY   file: one JSON object per line, appended by prov.summary (later keys win)
-    PROV_RUN_WANDB     file: the W&B run path, written by prov.wandb_init
 """
 
 import json
@@ -22,7 +21,6 @@ PROJECT = "PROV_PROJECT"
 INPUTS = "PROV_RUN_INPUTS"
 OUTPUTS = "PROV_RUN_OUTPUTS"
 SUMMARY = "PROV_RUN_SUMMARY"
-WANDB = "PROV_RUN_WANDB"
 
 
 @dataclass(frozen=True)
@@ -32,7 +30,6 @@ class RunEnv:
     inputs: Path | None = None
     outputs: Path | None = None
     summary: Path | None = None
-    wandb: Path | None = None
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] = os.environ) -> "RunEnv | None":
@@ -41,11 +38,11 @@ class RunEnv:
             return None
         file = lambda key: Path(environ[key]) if environ.get(key) else None   # noqa: E731
         return cls(run_id=environ[RUN_ID], project=environ.get(PROJECT), inputs=file(INPUTS),
-                   outputs=file(OUTPUTS), summary=file(SUMMARY), wandb=file(WANDB))
+                   outputs=file(OUTPUTS), summary=file(SUMMARY))
 
     def to_env(self) -> dict[str, str]:
         pairs = {RUN_ID: self.run_id, PROJECT: self.project, INPUTS: self.inputs, OUTPUTS: self.outputs,
-                 SUMMARY: self.summary, WANDB: self.wandb}
+                 SUMMARY: self.summary}
         return {k: str(v) for k, v in pairs.items() if v is not None}
 
     @staticmethod
@@ -53,6 +50,12 @@ class RunEnv:
         if path is not None:
             with open(path, "a") as f:
                 f.write(line + "\n")
+
+    def inputs_so_far(self) -> list[str]:
+        """Artifact IDs prov.load-ed so far in this run: load order, first occurrence kept."""
+        if self.inputs is None or not self.inputs.is_file():
+            return []
+        return list(dict.fromkeys(line for line in self.inputs.read_text().splitlines() if line))
 
     def record_input(self, id_: str) -> None:
         self._append(self.inputs, id_)
@@ -65,6 +68,3 @@ class RunEnv:
         self._append(self.summary, json.dumps(values))
         return self.summary is not None
 
-    def set_wandb(self, path: str) -> None:
-        if self.wandb is not None:
-            self.wandb.write_text(path)

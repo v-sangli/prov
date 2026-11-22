@@ -1,6 +1,6 @@
 # 0013. Record schemas are pydantic models, closed to unknown fields
 
-Status: Accepted (2026-11-09)
+Status: Accepted (2026-11-09); amended by 0017 (W&B removed)
 Covers: `src/prov/core/schema.py`, `src/prov/runs/schema.py`, `src/prov/artifacts/schema.py`, `src/prov/episodes/schema.py`
 PR: https://github.com/v-sangli/prov/pull/2
 

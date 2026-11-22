@@ -1,6 +1,6 @@
 # 0008. One infrastructure for all projects; the project is a field on every run
 
-Status: Accepted (2026-11-10)
+Status: Accepted (2026-11-10); amended by 0017 (W&B removed)
 Covers: `src/prov/core/context.py` (`prov.toml`), `src/prov/runs/schema.py` (`project`), `src/prov/core/runenv.py` (`PROV_PROJECT`)
 PR: https://github.com/v-sangli/prov/pull/2
 

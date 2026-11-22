@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 from conftest import git
 from prov.cli import main
 from prov.runs.schema import RunRecord
@@ -78,3 +80,21 @@ def test_no_prov_toml(registry, monkeypatch, tmp_path, capsys):
     monkeypatch.chdir(tmp_path)
     assert main(["run", "--", "true"]) == 2
     assert "no prov.toml" in capsys.readouterr().err
+
+
+def test_refs_outside_a_run_raises(registry, monkeypatch):
+    import prov
+    from prov.core.errors import RunError
+    monkeypatch.delenv("PROV_RUN_ID", raising=False)
+    with pytest.raises(RunError):
+        prov.refs()
+
+
+def test_refs_inside_a_run_lists_run_project_and_inputs(registry, monkeypatch, tmp_path):
+    import prov
+    inputs = tmp_path / "inputs"
+    inputs.write_text("ds_A\nckpt_B\nds_A\n")
+    monkeypatch.setenv("PROV_RUN_ID", "run_X")
+    monkeypatch.setenv("PROV_PROJECT", "cube")
+    monkeypatch.setenv("PROV_RUN_INPUTS", str(inputs))
+    assert prov.refs() == {"prov_run": "run_X", "prov_project": "cube", "prov_inputs": ["ds_A", "ckpt_B"]}

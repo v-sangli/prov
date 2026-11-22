@@ -6,7 +6,7 @@ One file per decision, written against the code as it is. Numbers are sequential
 | --- | --- | --- |
 | [0001](0001-custom-registry-owns-dataset-versioning.md) | A custom registry, not DVC or MLflow, owns records and dataset versions | D1 |
 | [0002](0002-duckdb-catalog-rebuilt-from-registry.md) | DuckDB is the query engine, rebuilt from registry records only | D2 |
-| [0003](0003-wandb-reference-artifacts.md) | W&B holds runs and curves; artifacts reach it as references to registry records | D3 |
+| [0003](0003-wandb-reference-artifacts.md) | W&B holds runs and curves; artifacts reach it as references to registry records (superseded by 0017) | D3 |
 | [0004](0004-ulid-ids-with-kind-prefix-and-aliases.md) | IDs are ULIDs with a kind prefix; readable aliases sit on top | D4 |
 | [0005](0005-every-run-snapshots-its-working-tree.md) | Uncommitted code is allowed; every run snapshots each repo's working tree | D5 |
 | [0006](0006-journal-is-an-obsidian-vault-per-project.md) | The journal is an Obsidian vault of Markdown in each project repo | D6 |
@@ -20,6 +20,7 @@ One file per decision, written against the code as it is. Numbers are sequential
 | [0014](0014-no-content-hashing-id-is-identity.md) | No content hashing: the ID is the identity, folders are read-only | D14 |
 | [0015](0015-calibrations-are-registry-artifacts.md) | Calibrations are registry artifacts; episodes reference theirs | D17 |
 | [0016](0016-one-registry-wide-write-lock.md) | One registry-wide lock serializes every registry write | - |
+| [0017](0017-integrate-by-reference-only.md) | prov integrates by reference only; the W&B integration and the event system go | - |
 
 D15 (operating knowledge in the handbook) and D16 (credentials) are machine-operating decisions
 and live with the handbook, not here.

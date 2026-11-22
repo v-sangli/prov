@@ -4,8 +4,6 @@ import dataclasses
 import json
 from pathlib import Path
 
-from prov.artifacts.publish import publish
-from prov.core import events
 from prov.core.extensions import CatalogTables, IngestFormat, LintCheck
 from prov.episodes.ingest import ingest
 from prov.journal.docs import new_doc
@@ -30,19 +28,6 @@ def test_new_ingest_format(ctx, tmp_path):
     session, eps = ingest(ctx, src, format="takes")
     assert session.meta["format"] == "takes"
     assert [(e.episode_index, e.length, e.duration_s) for e in eps] == [(0, 30, 3.0), (1, 40, 4.0)]
-
-
-def test_subscriber_sees_events(ctx, tmp_path):
-    seen = []
-    subs = {k: list(v) for k, v in ctx.ext.subscribers.items()}
-    for event in ("artifact.published", "run.summary"):
-        subs.setdefault(event, []).append(lambda c, payload, e=event: seen.append((e, payload)))
-    ctx = _with(ctx, subscribers=subs)
-    f = tmp_path / "r.json"
-    f.write_text("{}")
-    rec = publish(ctx, f, "result")
-    events.emit(ctx, "run.summary", {"x": 1})
-    assert seen == [("artifact.published", rec), ("run.summary", {"x": 1})]
 
 
 def test_new_lint_check(ctx, tmp_path, monkeypatch):
