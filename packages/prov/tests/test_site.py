@@ -12,8 +12,8 @@ from prov.journal.docs import new_doc
 from prov.journal.project import init_project
 from prov.wiring import context
 
-QUARTZ = Path(__file__).resolve().parents[2] / "tools" / "quartz"
-NODE = Path(__file__).resolve().parents[2] / "tools" / "node" / "bin"
+QUARTZ = Path(__file__).resolve().parents[4] / "tools" / "quartz"
+NODE = Path(__file__).resolve().parents[4] / "tools" / "node" / "bin"
 
 
 @pytest.fixture
