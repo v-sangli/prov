@@ -12,9 +12,8 @@ from prov.docs import register as docs
 
 
 def cmd_doc(args, get_ctx) -> int:
-    ctx = get_ctx()
-    for path in args.paths:
-        print(docs.register(ctx, Path(path)).id)
+    for record in docs.register(get_ctx(), [Path(p) for p in args.paths]):
+        print(record.id)
     return 0
 
 
