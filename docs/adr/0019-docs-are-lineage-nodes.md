@@ -1,6 +1,6 @@
 # 0019. Docs are lineage nodes; lineage walks one edges view
 
-Status: Proposed (accepted at finalize)
+Status: Accepted (2026-11-21)
 Covers: `packages/prov/src/prov/docs/`, `packages/prov/src/prov/lineage/graph.py`, `packages/prov/src/prov/storage/catalog.py`, `packages/prov/src/prov/core/extensions.py`, the `tables.py` of runs, artifacts, episodes and datasets, `packages/prov/src/prov/cli/docs.py`, `packages/prov-journal/src/prov_journal/`, `packages/prov-skills/src/prov_skills/journal/SKILL.md`
 PR: (at finalize; spec and plan 424357b)
 
@@ -29,6 +29,10 @@ also per-kind code in `lineage/graph.py`: each new kind of edge meant new branch
   `nodes` with no per-kind code; a node's neighbours come in (`ord`, ID) order, which keeps the
   previous output order. Edges: `input` (runs), `produced` (artifacts), `parent` and `member`
   (datasets), `cites` (docs). Episodes are nodes, so docs can cite them.
+- The catalog is current only when both the registry HEAD and a hash of every bundle's SQL
+  match what it was built from (amends ADR 0002), so an upgrade that changes the tables
+  rebuilds a stale catalog instead of failing on a missing view.
+- The journal lint's known IDs are the `nodes` view, so docs may cite docs.
 - Versions: prov 0.5.0, prov-journal 0.2.0, prov-skills 0.1.1.
 
 ## Consequences
@@ -49,3 +53,5 @@ also per-kind code in `lineage/graph.py`: each new kind of edge meant new branch
 - `packages/prov/tests/test_layers.py` (`prov.docs` at layer 3)
 - `packages/prov-journal/tests/test_journal.py::test_new_doc_has_a_doc_id`
 - `packages/prov-journal/tests/test_journal.py::test_register_every_dated_doc`
+- `packages/prov-journal/tests/test_journal.py::test_lint_knows_registered_doc_ids`
+- `packages/prov/tests/test_extensions.py::test_catalog_rebuilds_when_its_tables_change`
