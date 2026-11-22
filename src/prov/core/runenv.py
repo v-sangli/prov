@@ -54,6 +54,12 @@ class RunEnv:
             with open(path, "a") as f:
                 f.write(line + "\n")
 
+    def inputs_so_far(self) -> list[str]:
+        """Artifact IDs prov.load-ed so far in this run: load order, first occurrence kept."""
+        if self.inputs is None or not self.inputs.is_file():
+            return []
+        return list(dict.fromkeys(line for line in self.inputs.read_text().splitlines() if line))
+
     def record_input(self, id_: str) -> None:
         self._append(self.inputs, id_)
 

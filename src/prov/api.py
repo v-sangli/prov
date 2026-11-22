@@ -11,6 +11,7 @@ from prov.artifacts import aliases
 from prov.artifacts import publish as _artifacts
 from prov.artifacts.schema import ArtifactRecord
 from prov.core import events, log
+from prov.core.errors import RunError
 from prov.datasets import members as _members
 from prov.integrations import wandb as _wandb
 from prov.wiring import context
@@ -64,5 +65,14 @@ def wandb_init(**kwargs):
     return _wandb.wandb_init(context(), **kwargs)
 
 
+def refs() -> dict[str, str | list[str] | None]:
+    """The prov IDs that ground the current run, for any tool's config or metadata."""
+    ctx = context()
+    if ctx.run is None:
+        raise RunError("prov.refs() needs a run: launch the script with `prov run`")
+    return {"prov_run": ctx.run.run_id, "prov_project": ctx.run.project,
+            "prov_inputs": ctx.run.inputs_so_far()}
+
+
 __all__ = ["context", "load", "publish", "path", "summary", "members", "dataset_sessions",
-           "wandb_init"]
+           "refs", "wandb_init"]

@@ -21,6 +21,10 @@ class RegistryLocked(ProvError):
     pass
 
 
+class RunError(ProvError):
+    pass
+
+
 class AliasError(ProvError):
     pass
 
