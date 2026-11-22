@@ -7,6 +7,7 @@
     prov-journal new <topic> [--continues <doc>]   start today's doc from the template
     prov-journal lint                              check frontmatter, IDs, images, links, NOW.md
     prov-journal index                             rebuild journal/INDEX.md (docs by date and status)
+    prov-journal register                          register every dated doc as a prov doc; prints each ID
 
     prov-journal site build [<vault dir>] [--name N]
         Build a Markdown vault (default: this project's journal) into a static site with Quartz.
@@ -23,6 +24,7 @@ import duckdb
 from prov.core import log
 from prov.core.context import Context, load_project
 from prov.core.errors import ProvError
+from prov.docs import register
 from prov.wiring import extensions
 from prov_journal import docs
 from prov_journal.lint import lint
@@ -43,6 +45,13 @@ def cmd_new(args, get_ctx) -> int:
 
 def cmd_index(args, get_ctx) -> int:
     print(docs.index(docs.journal_root()))
+    return 0
+
+
+def cmd_register(args, get_ctx) -> int:
+    ctx = get_ctx()
+    for doc in docs.docs(docs.journal_root()):
+        print(register.register(ctx, doc.path).id)
     return 0
 
 
@@ -80,6 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     new.set_defaults(func=cmd_new)
     sub.add_parser("lint", help="check the journal").set_defaults(func=cmd_lint)
     sub.add_parser("index", help="rebuild journal/INDEX.md").set_defaults(func=cmd_index)
+    sub.add_parser("register", help="register every dated doc as a prov doc").set_defaults(func=cmd_register)
     st = sub.add_parser("site", help="build and serve journal / handbook sites")
     st.add_argument("action", choices=["build", "serve"])
     st.add_argument("source", nargs="?", help="vault folder to build (default: this project's journal)")

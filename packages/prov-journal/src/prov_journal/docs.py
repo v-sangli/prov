@@ -13,6 +13,7 @@ import yaml
 
 from prov.core.context import load_project
 from prov.core.errors import JournalError
+from prov.core.ids import new_id
 
 TEMPLATES = Path(__file__).parent / "templates"
 STATUSES = {"open", "concluded", "superseded"}
@@ -55,7 +56,8 @@ def new_doc(topic: str, continues: str | None = None, today: date | None = None,
         cont = str(Path("../../..") / target.relative_to(root.resolve()) / "README.md")
     folder.mkdir(parents=True)
     title = topic.replace("-", " ").capitalize()
-    text = (TEMPLATES / "doc.md").read_text().format(date=d.isoformat(), continues=cont or "null", title=title)
+    text = (TEMPLATES / "doc.md").read_text().format(id=new_id("doc"), date=d.isoformat(),
+                                                    continues=cont or "null", title=title)
     (folder / "README.md").write_text(text)
     return folder / "README.md"
 

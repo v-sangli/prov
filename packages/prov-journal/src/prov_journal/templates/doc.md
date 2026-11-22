@@ -1,4 +1,5 @@
 ---
+id: {id}
 date: {date}
 status: open
 continues: {continues}

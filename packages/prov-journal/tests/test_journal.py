@@ -133,3 +133,29 @@ def test_cli(project, capsys):
     assert main(["lint"]) == 1
     assert main(["index"]) == 0
     assert cli.main(["init", "cube-grasp"]) == 0 and "already set up" in capsys.readouterr().out.splitlines()[-1]
+
+
+def test_new_doc_has_a_doc_id(project, ctx):
+    from prov.core.ids import kind_of
+    from prov_journal.docs import docs
+    new_doc("first", today=D1)
+    new_doc("second", today=D2)
+    ids = [d.meta["id"] for d in docs(project / "journal")]
+    assert [kind_of(i) for i in ids] == ["doc", "doc"] and ids[0] != ids[1]
+    assert lint(ctx, project / "journal") == []
+
+
+def test_register_every_dated_doc(project, capsys):
+    from conftest import git
+    from prov.docs.register import load
+    from prov.wiring import context
+    from prov_journal.docs import docs
+    git(project, "init", "-q", "-b", "main")
+    new_doc("first", today=D1)
+    new_doc("second", today=D2)
+    assert main(["register"]) == 0
+    printed = capsys.readouterr().out.split()
+    expected = [d.meta["id"] for d in docs(project / "journal")]
+    assert printed == expected
+    assert [load(context(), i).path for i in printed] == [
+        "journal/2026/11/2026-11-09-first/README.md", "journal/2026/11/2026-11-10-second/README.md"]
