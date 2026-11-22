@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/plot.py`, `src/prov/integrations/plot.py`, `src/prov/journal/skills/plotting/`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Journal plots and paper figures should share one house style, be artifacts like everything else

@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/core/ids.py` (`calib_`), `src/prov/core/layout.py` (`calibrations/`), `src/prov/artifacts/aliases.py` (`calib:`), `src/prov/episodes/ingest.py` (`calibrations`)
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Recordings depend on camera intrinsics and extrinsics, hand offsets and robot config files that

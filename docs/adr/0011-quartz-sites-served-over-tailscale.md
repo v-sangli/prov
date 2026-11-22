@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-09)
 Covers: `src/prov/integrations/site/`, `src/prov/cli/site.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Journals (and the handbook) must be readable from a laptop or phone, with figures and rollout

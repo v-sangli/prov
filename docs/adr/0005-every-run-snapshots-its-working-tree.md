@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-09)
 Covers: `src/prov/runs/snapshot.py`, `src/prov/runs/wrapper.py`, `src/prov/runs/rerun.py`, `src/prov/core/context.py` (`prov.toml` `repos`)
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 In the last project the recorded commit was often "uncommitted": research code is edited

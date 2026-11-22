@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/artifacts/publish.py`, `src/prov/storage/store.py` (`make_read_only`), `src/prov/episodes/ingest.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Sessions and checkpoints run to many gigabytes; hashing them on every publish, and re-hashing to

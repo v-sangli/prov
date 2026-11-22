@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/core/context.py` (`prov.toml`), `src/prov/runs/schema.py` (`project`), `src/prov/core/runenv.py` (`PROV_PROJECT`)
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Robot-learning projects share sessions, checkpoints and benchmarks. Separate registries or

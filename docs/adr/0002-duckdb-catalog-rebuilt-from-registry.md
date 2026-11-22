@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/storage/catalog.py`, `src/prov/*/tables.py`, `src/prov/lineage/`, `src/prov/cli/query.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Records are many small text files in git (ADR 0001); finding "failed grasps in dataset 3" or

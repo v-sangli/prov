@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/integrations/wandb.py`, `src/prov/api.py` (`wandb_init`, `summary`), `src/prov/core/events.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Training curves and eval summaries are best viewed online, and an online lineage graph helps.

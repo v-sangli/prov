@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/journal/`, `src/prov/cli/journal.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 The last project's journal worked (NOW.md, one doc per topic per day, frozen past docs, verified

@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/core/ids.py`, `src/prov/artifacts/aliases.py`, `src/prov/cli/artifacts.py` (`alias`)
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Records reference each other by ID, so an ID must be unique without coordination, readable

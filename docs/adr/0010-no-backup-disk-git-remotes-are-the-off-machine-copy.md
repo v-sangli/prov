@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/runs/snapshot.py` (ref push), `src/prov/storage/registry.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 There is one machine and no second disk. Cloud artifact storage is out (bytes stay on this

@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-09)
 Covers: `src/prov/core/layout.py`, `src/prov/storage/registry.py`, `src/prov/datasets/`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Every number, figure, model and dataset must trace back to what made it, across all projects,

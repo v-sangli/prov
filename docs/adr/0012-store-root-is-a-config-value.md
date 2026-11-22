@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-09)
 Covers: `src/prov/storage/store.py`, `src/prov/core/layout.py` (`KIND_DIRS`), `src/prov/core/context.py` (`store_root`)
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 There is no dedicated data disk yet; the store shares the system NVMe (ext4) after cleanup. A

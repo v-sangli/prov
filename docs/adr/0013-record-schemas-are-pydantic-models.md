@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-09)
 Covers: `src/prov/core/schema.py`, `src/prov/runs/schema.py`, `src/prov/artifacts/schema.py`, `src/prov/episodes/schema.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Records are written by tools and read back by the catalog, lineage, W&B and reruns. A field

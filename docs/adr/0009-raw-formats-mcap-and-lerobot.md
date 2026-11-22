@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-10)
 Covers: `src/prov/episodes/`, `src/prov/cli/episodes.py`, `src/prov/core/extensions.py` (`IngestFormat`)
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
 Recordings arrive two ways: teleop writes LeRobot folders directly, and other rigs record MCAP,
