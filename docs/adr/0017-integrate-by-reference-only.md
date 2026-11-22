@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-21)
 Covers: `src/prov/api.py`, `src/prov/core/runenv.py`, `src/prov/core/extensions.py`, `src/prov/runs/`, `src/prov/wiring.py`
-PR: pending
+PR: https://github.com/v-sangli/prov/pull/4
 
 ## Context
 
