@@ -22,3 +22,24 @@ inverts that and is removed.
 ## Variation axes
 
 The event-subscriber axis loses its only implementation (W&B); see the sketch.
+
+## Agreed interface sketch (2026-11-21; events option A)
+
+```python
+# src/prov/api.py
+def refs() -> dict[str, str | list[str] | None]:
+    """{"prov_run": "run_...", "prov_project": "cube-grasp", "prov_inputs": ["ds_...", ...]}
+    inputs = artifacts prov.load-ed so far in this run, load order, deduplicated.
+    Raises RunError outside `prov run`."""
+
+# src/prov/core/runenv.py
+class RunEnv:                 # wandb field and PROV_RUN_WANDB removed
+    def inputs_so_far(self) -> list[str]: ...
+
+# src/prov/core/errors.py
+class RunError(ProvError): ...
+```
+
+Removed besides W&B (option A): the event system — `core/events.py`,
+`Extensions.subscribers`, the subscriber wiring and every `events.emit` call; "event
+subscribers" leaves the README's variation axes.
