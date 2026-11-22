@@ -45,7 +45,6 @@ class RunRecord(Record):
     env: Env
     inputs: list[str] = []
     outputs: list[str] = []
-    wandb: str | None = None
     tags: dict[str, str] = {}
     summary: dict[str, float | int | str] = {}
     notes: str | None = None

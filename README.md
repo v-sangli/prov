@@ -10,7 +10,7 @@ the Python API, catalog tables with example queries, the journal, and troublesho
 
 ```bash
 uv venv .venv --python 3.12
-uv pip install --python .venv/bin/python -e ".[test,wandb,plot]"
+uv pip install --python .venv/bin/python -e ".[test,plot]"
 .venv/bin/python -m pytest -q
 ```
 

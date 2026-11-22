@@ -14,7 +14,7 @@ jobs:
       - name: Install
         run: |
           uv venv .venv --python 3.12
-          uv pip install --python .venv/bin/python -e ".[test,wandb,plot]"
+          uv pip install --python .venv/bin/python -e ".[test,plot]"
       - name: Lint
         run: uvx ruff@0.8.4 check src tests
       - name: Test

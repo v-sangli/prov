@@ -11,7 +11,7 @@ from typing import Any
 
 from prov.artifacts import aliases
 from prov.artifacts.schema import ArtifactRecord
-from prov.core import events, layout
+from prov.core import layout
 from prov.core.errors import StoreError
 from prov.core.ids import kind_of, new_id
 from prov.storage import registry, store
@@ -29,16 +29,14 @@ def _check_alias(ctx, alias: str, kind: str) -> None:
 def publish(ctx, path: Path, kind: str, meta: dict[str, Any] | None = None, copy: bool = False,
             alias: str | None = None) -> ArtifactRecord:
     """`alias` (`kind:name/version`) is checked before anything moves and set after. Holds the
-    registry lock for the whole publish; `artifact.published` is emitted after release."""
+    registry lock for the whole publish."""
     with RegistryLock(ctx.registry):
-        record = _publish(ctx, path, kind, meta=meta, copy=copy, alias=alias)
-    events.emit(ctx, "artifact.published", record)
-    return record
+        return _publish(ctx, path, kind, meta=meta, copy=copy, alias=alias)
 
 
 def _publish(ctx, path: Path, kind: str, meta: dict[str, Any] | None = None, copy: bool = False,
              alias: str | None = None) -> ArtifactRecord:
-    """publish, without the lock or the event: for callers that already hold the lock."""
+    """publish, without the lock: for callers that already hold it."""
     if alias:
         _check_alias(ctx, alias, kind)
     if kind not in layout.KIND_DIRS:

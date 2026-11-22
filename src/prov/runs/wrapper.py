@@ -50,7 +50,7 @@ def run(ctx, project: ProjectConfig, command: list[str], kind: str = "other",
     _log.info("%s", run_id)
 
     with tempfile.TemporaryDirectory() as tmp:
-        files = {k: Path(tmp) / k for k in ("inputs", "outputs", "summary", "wandb")}
+        files = {k: Path(tmp) / k for k in ("inputs", "outputs", "summary")}
         for f in files.values():
             f.touch()
         run_env = RunEnv(run_id=run_id, project=project.project, **files)
@@ -64,7 +64,6 @@ def run(ctx, project: ProjectConfig, command: list[str], kind: str = "other",
         record.outputs = _lines(files["outputs"])
         for line in _lines(files["summary"]):
             record.summary.update(json.loads(line))
-        record.wandb = files["wandb"].read_text().strip() or None
 
     record.finished = datetime.now(timezone.utc)
     record.exit_code = rc

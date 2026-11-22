@@ -12,7 +12,7 @@ from typing import Any
 
 from prov.artifacts import publish as artifacts
 from prov.artifacts.schema import ArtifactRecord
-from prov.core import events, layout
+from prov.core import layout
 from prov.core.errors import StoreError
 from prov.core.ids import kind_of, new_id
 from prov.episodes.schema import EpisodeRecord, EpisodeSource
@@ -59,19 +59,15 @@ def ingest(ctx, path: Path, format: str = "lerobot", source_map: Path | None = N
     """Publish a folder as a session (unless it is one already) and register its episodes.
 
     Re-ingesting is a no-op: a folder already in the store, or a source already ingested, returns
-    the existing session and episodes. Holds the registry lock for the whole ingest;
-    `artifact.published` for a new session is emitted after release.
+    the existing session and episodes. Holds the registry lock for the whole ingest.
     """
     with RegistryLock(ctx.registry):
-        session, eps, published = _ingest(ctx, path, format, source_map, calibrations, meta, copy)
-    if published:
-        events.emit(ctx, "artifact.published", session)
-    return session, eps
+        return _ingest(ctx, path, format, source_map, calibrations, meta, copy)
 
 
 def _ingest(ctx, path: Path, format: str, source_map: Path | None, calibrations: list[str],
-            meta: dict[str, Any] | None, copy: bool) -> tuple[ArtifactRecord, list[EpisodeRecord], bool]:
-    """ingest under the lock; the bool says whether this call published the session."""
+            meta: dict[str, Any] | None, copy: bool) -> tuple[ArtifactRecord, list[EpisodeRecord]]:
+    """ingest, without the lock."""
     fmt = _format(ctx, format)
     for c in calibrations:
         if kind_of(c) != "calibration":
@@ -79,7 +75,6 @@ def _ingest(ctx, path: Path, format: str, source_map: Path | None, calibrations:
         artifacts.load(ctx, c)
 
     sources = read_source_map(source_map) if source_map else {}
-    published = False
     src = Path(path).expanduser().resolve()
     if src.parent == store.kind_dir(ctx, "session").resolve():
         session = artifacts.load(ctx, src.name)
@@ -89,10 +84,9 @@ def _ingest(ctx, path: Path, format: str, source_map: Path | None, calibrations:
         session_meta, rows = fmt.read(src)     # validate before moving anything
         _check_sources(rows, sources)
         session = artifacts._publish(ctx, src, "session", meta={**session_meta, **(meta or {})}, copy=copy)
-        published = True
 
     if eps := read_episodes(ctx, session.id):
-        return session, eps, published
+        return session, eps
 
     session_meta, rows = fmt.read(store.resolve(ctx, session.uri))
     _check_sources(rows, sources)
@@ -109,4 +103,4 @@ def _ingest(ctx, path: Path, format: str, source_map: Path | None, calibrations:
     text = "".join(e.model_dump_json() + "\n" for e in eps)
     ep_path = registry.write(ctx.registry, layout.episodes_file(session.id), text)
     registry.commit(ctx.registry, ep_path, f"ingest {session.id}: {len(eps)} episodes")
-    return session, eps, published
+    return session, eps

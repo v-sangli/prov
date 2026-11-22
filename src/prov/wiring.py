@@ -9,7 +9,6 @@ from prov.core.extensions import Extensions
 from prov.datasets import tables as dataset_tables
 from prov.episodes import tables as episode_tables
 from prov.episodes.formats import lerobot
-from prov.integrations import wandb
 from prov.journal.lint import body_ids, evidence, frontmatter, images, links, now
 from prov.runs import tables as run_tables
 
@@ -19,7 +18,6 @@ def extensions() -> Extensions:
         tables=[run_tables.TABLES, artifact_tables.TABLES, episode_tables.TABLES, dataset_tables.TABLES],
         formats={lerobot.FORMAT.name: lerobot.FORMAT},
         lint_checks=[frontmatter.CHECK, links.CHECK, evidence.CHECK, body_ids.CHECK, images.CHECK, now.CHECK],
-        subscribers={event: list(fns) for event, fns in wandb.SUBSCRIBERS.items()},
     )
 
 

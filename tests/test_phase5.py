@@ -2,7 +2,6 @@ import sys
 from pathlib import Path
 
 import pytest
-import wandb
 
 from conftest import git
 from prov.artifacts import aliases
@@ -103,65 +102,3 @@ def test_summary_outside_run_warns(registry, capsys):
     from prov import summary
     summary(x=1)
     assert "not recorded" in capsys.readouterr().err
-
-
-class _FakeRun:
-    def __init__(self):
-        self.used, self.logged, self.summary = [], [], {}
-
-    def use_artifact(self, art):
-        self.used.append(art)
-
-    def log_artifact(self, art):
-        self.logged.append(art)
-
-
-def test_wandb_reference_artifacts_hold_paths_only(registry, tmp_path, monkeypatch, ctx):
-    src = make_lerobot(tmp_path / "s", [5, 5])
-    from prov.episodes.ingest import ingest
-    ingest(ctx, src)
-    ds = freeze(ctx, "cube", query="SELECT id FROM episodes")["all"]
-    fake = _FakeRun()
-    monkeypatch.setattr(wandb, "run", fake)
-
-    import prov
-    prov.load("ds:cube/1")
-    ckpt = tmp_path / "ckpt"
-    ckpt.mkdir()
-    (ckpt / "w.bin").write_bytes(b"0" * 1000)
-    rec = prov.publish(ckpt, "checkpoint", alias="model:cube/0.1")
-
-    from wandb.sdk.lib.hashutil import md5_string
-    [used], [logged] = fake.used, fake.logged
-    assert (used.type, used.name, used.metadata["prov_id"]) == ("dataset", "cube", ds.id)
-    assert logged.type == "checkpoint" and logged.metadata["prov_alias"] == "model:cube/0.1"
-    assert logged.metadata["uri"] == rec.uri
-    for art, rec_id, kind in ((used, ds.id, "dataset"), (logged, rec.id, "checkpoint")):
-        target = registry / "records" / "artifacts" / kind / f"{rec_id}.yaml"
-        [entry] = art.manifest.entries.values()          # one entry, however big the folder
-        assert entry.ref == f"file://{target}"
-        assert entry.digest == md5_string(target.resolve().as_uri())   # path hashed, contents not read
-
-
-def test_wandb_failures_never_break_a_run(registry, tmp_path, monkeypatch, capsys, ctx):
-    class Broken(_FakeRun):
-        def log_artifact(self, art):
-            raise RuntimeError("offline")
-    monkeypatch.setattr(wandb, "run", Broken())
-    f = tmp_path / "r.json"
-    f.write_text("{}")
-    publish(ctx, f, "result")
-    assert "W&B log_artifact failed" in capsys.readouterr().err
-
-
-def test_wandb_init_offline_records_run_path(repo, registry, monkeypatch, tmp_path, ctx):
-    _project(repo, monkeypatch)
-    monkeypatch.setenv("WANDB_MODE", "offline")
-    monkeypatch.setenv("WANDB_DIR", str(tmp_path))
-    monkeypatch.setenv("WANDB_SILENT", "true")
-    f = tmp_path / "r.json"
-    f.write_text("{}")
-    rec = _run("eval", "import prov; run = prov.wandb_init(); "
-                       f"prov.publish({str(f)!r}, 'result'); prov.summary(score=1.0); run.finish()")
-    assert rec.wandb and rec.wandb.split("/")[-2] == "demo"
-    assert rec.summary == {"score": 1.0} and len(rec.outputs) == 1
