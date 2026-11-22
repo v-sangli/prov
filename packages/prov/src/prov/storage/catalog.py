@@ -5,10 +5,12 @@ runs, artifacts, episodes, datasets, docs); this module only builds and opens th
 The bundles' lineage SQL becomes two views: `nodes (id, label)` and `edges (src, rel, dst, ord)`,
 the unions of what each bundle contributes; `ord` is the bundle's position in `ctx.ext.tables`,
 which orders a node's neighbours (lineage sorts by `ord`, then ID).
-`catalog_meta` records the registry HEAD the catalog was built from; `connect()` rebuilds first
-when the registry has moved since. All timestamps are naive UTC.
+`catalog_meta` records the registry HEAD and the table definitions (a hash of every bundle's
+SQL) the catalog was built from; `connect()` rebuilds first when either has changed since, so a
+prov upgrade that changes the tables never reads a stale catalog. All timestamps are naive UTC.
 """
 
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -31,6 +33,12 @@ def _insert(con: duckdb.DuckDBPyConnection, table: str, rows: list[tuple]) -> No
         con.executemany(f"INSERT INTO {table} VALUES ({','.join('?' * len(rows[0]))})", rows)
 
 
+def _schema(ctx) -> str:
+    """A hash of every bundle's table, node and edge SQL, in order."""
+    sql = "\0".join(part for b in ctx.ext.tables for part in (b.name, b.ddl, b.nodes, b.edges))
+    return hashlib.sha256(sql.encode()).hexdigest()
+
+
 def rebuild(ctx) -> Path:
     db = ctx.catalog
     with RegistryLock(ctx.registry):
@@ -48,8 +56,8 @@ def rebuild(ctx) -> Path:
             f"SELECT id, label FROM ({b.nodes})" for b in bundles if b.nodes))
         con.execute("CREATE VIEW edges AS " + " UNION ALL ".join(
             f"SELECT src, rel, dst, {i} AS ord FROM ({b.edges})" for i, b in enumerate(bundles) if b.edges))
-        con.execute("CREATE TABLE catalog_meta (registry_head VARCHAR)")
-        con.execute("INSERT INTO catalog_meta VALUES (?)", [registry.head(ctx.registry)])
+        con.execute("CREATE TABLE catalog_meta (registry_head VARCHAR, schema VARCHAR)")
+        con.execute("INSERT INTO catalog_meta VALUES (?, ?)", [registry.head(ctx.registry), _schema(ctx)])
         con.close()
         tmp.replace(db)
     _log.debug("catalog rebuilt at %s", db)
@@ -62,7 +70,7 @@ def _is_current(ctx) -> bool:
         return False
     try:
         with duckdb.connect(str(ctx.catalog), read_only=True) as con:
-            return con.execute("SELECT registry_head FROM catalog_meta").fetchone()[0] == head
+            return con.execute("SELECT registry_head, schema FROM catalog_meta").fetchone() == (head, _schema(ctx))
     except duckdb.Error:
         return False
 

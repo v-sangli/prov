@@ -49,3 +49,15 @@ def test_new_catalog_edges_join_lineage(ctx):
     assert graph.uses(ctx, a) == [(0, a, "A"), (1, b, "B")]
     with catalog.connect(ctx) as con:
         assert con.execute("SELECT src, rel, dst FROM edges WHERE rel = 'link'").fetchall() == [(a, "link", b)]
+
+
+def test_catalog_rebuilds_when_its_tables_change(ctx, registry):
+    from conftest import git
+    (registry / "x").write_text("x")
+    git(registry, "add", "x")
+    git(registry, "commit", "-q", "-m", "x")
+    catalog.rebuild(ctx)                                   # built from the built-in tables
+    extra = CatalogTables("notes", "CREATE TABLE notes (k VARCHAR);", lambda c: {"notes": [("a",)]})
+    ctx = _with(ctx, tables=[*ctx.ext.tables, extra])      # same registry HEAD, new tables
+    with catalog.connect(ctx) as con:
+        assert con.execute("SELECT k FROM notes").fetchall() == [("a",)]
