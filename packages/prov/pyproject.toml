@@ -1,6 +1,6 @@
 [project]
 name = "prov"
-version = "0.6.0"
+version = "0.6.1"
 description = "Provenance records, IDs and code snapshots for research runs"
 requires-python = ">=3.11"
 dependencies = ["pydantic>=2.7", "pyyaml>=6", "duckdb>=1.1"]

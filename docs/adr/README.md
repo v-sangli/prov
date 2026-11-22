@@ -23,6 +23,7 @@ One file per decision, written against the code as it is. Numbers are sequential
 | [0017](0017-integrate-by-reference-only.md) | prov integrates by reference only; the W&B integration and the event system go | - |
 | [0018](0018-prov-is-the-core-tools-depend-on-it.md) | prov is the core; prov-journal and prov-skills depend on it | - |
 | [0019](0019-docs-are-lineage-nodes.md) | Docs are lineage nodes; lineage walks one edges view | - |
+| [0020](0020-ci-gate-enforces-the-merge-checks.md) | A CI gate enforces the dev-flow merge checks | - |
 
 D15 (operating knowledge in the handbook) and D16 (credentials) are machine-operating decisions
 and live with the handbook, not here.
