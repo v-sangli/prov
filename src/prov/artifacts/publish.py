@@ -15,6 +15,7 @@ from prov.core import events, layout
 from prov.core.errors import StoreError
 from prov.core.ids import kind_of, new_id
 from prov.storage import registry, store
+from prov.storage.lock import RegistryLock
 
 
 def _check_alias(ctx, alias: str, kind: str) -> None:
@@ -27,7 +28,17 @@ def _check_alias(ctx, alias: str, kind: str) -> None:
 
 def publish(ctx, path: Path, kind: str, meta: dict[str, Any] | None = None, copy: bool = False,
             alias: str | None = None) -> ArtifactRecord:
-    """`alias` (`kind:name/version`) is checked before anything moves and set after."""
+    """`alias` (`kind:name/version`) is checked before anything moves and set after. Holds the
+    registry lock for the whole publish; `artifact.published` is emitted after release."""
+    with RegistryLock(ctx.registry):
+        record = _publish(ctx, path, kind, meta=meta, copy=copy, alias=alias)
+    events.emit(ctx, "artifact.published", record)
+    return record
+
+
+def _publish(ctx, path: Path, kind: str, meta: dict[str, Any] | None = None, copy: bool = False,
+             alias: str | None = None) -> ArtifactRecord:
+    """publish, without the lock or the event: for callers that already hold the lock."""
     if alias:
         _check_alias(ctx, alias, kind)
     if kind not in layout.KIND_DIRS:
@@ -52,10 +63,9 @@ def publish(ctx, path: Path, kind: str, meta: dict[str, Any] | None = None, copy
     rec_path = registry.write(ctx.registry, layout.artifact_record(kind, id_), record.to_yaml())
     registry.commit(ctx.registry, rec_path, f"publish {id_} ({kind})")
     if alias:
-        aliases.set_version(ctx, alias, id_)
+        aliases._set_version(ctx, alias, id_)
     if ctx.run:
         ctx.run.record_output(id_)
-    events.emit(ctx, "artifact.published", record)
     return record
 
 

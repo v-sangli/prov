@@ -6,6 +6,7 @@ from prov.core import layout
 from prov.core.errors import StoreError
 from prov.runs.schema import RunRecord
 from prov.storage import registry
+from prov.storage.lock import RegistryLock
 
 
 def path(ctx, run_id: str) -> Path:
@@ -21,9 +22,10 @@ def load(ctx, run_id: str) -> RunRecord:
 
 def write(ctx, record: RunRecord, message: str | None = None) -> Path:
     """Write the record; commit it when `message` is given."""
-    p = registry.write(ctx.registry, layout.run_record(record.id), record.to_yaml())
-    if message:
-        registry.commit(ctx.registry, p, message)
+    with RegistryLock(ctx.registry):
+        p = registry.write(ctx.registry, layout.run_record(record.id), record.to_yaml())
+        if message:
+            registry.commit(ctx.registry, p, message)
     return p
 
 

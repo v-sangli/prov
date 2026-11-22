@@ -41,6 +41,7 @@ def registry(tmp_path: Path, monkeypatch) -> Path:
     reg = tmp_path / "registry"
     reg.mkdir()
     git(reg, "init", "-q", "-b", "main")
+    (reg / ".git" / "info" / "exclude").write_text(".prov.lock\n")   # setup step, as in the README
     cfg = tmp_path / "config.toml"
     cfg.write_text(f'registry = "{reg}"\nstore_root = "{tmp_path / "store"}"\n'
                    f'catalog = "{tmp_path / "catalog.duckdb"}"\n')

@@ -13,6 +13,7 @@ import duckdb
 
 from prov.core import log
 from prov.storage import registry
+from prov.storage.lock import RegistryLock
 
 _log = log.get("catalog")
 
@@ -29,19 +30,20 @@ def _insert(con: duckdb.DuckDBPyConnection, table: str, rows: list[tuple]) -> No
 
 def rebuild(ctx) -> Path:
     db = ctx.catalog
-    db.parent.mkdir(parents=True, exist_ok=True)
-    tmp = db.with_name(db.name + ".tmp")
-    tmp.unlink(missing_ok=True)
-    con = duckdb.connect(str(tmp))
-    for bundle in ctx.ext.tables:
-        con.execute(bundle.ddl)
-    for bundle in ctx.ext.tables:
-        for table, rows in bundle.rows(ctx).items():
-            _insert(con, table, list(rows))
-    con.execute("CREATE TABLE catalog_meta (registry_head VARCHAR)")
-    con.execute("INSERT INTO catalog_meta VALUES (?)", [registry.head(ctx.registry)])
-    con.close()
-    tmp.replace(db)
+    with RegistryLock(ctx.registry):
+        db.parent.mkdir(parents=True, exist_ok=True)
+        tmp = db.with_name(db.name + ".tmp")
+        tmp.unlink(missing_ok=True)
+        con = duckdb.connect(str(tmp))
+        for bundle in ctx.ext.tables:
+            con.execute(bundle.ddl)
+        for bundle in ctx.ext.tables:
+            for table, rows in bundle.rows(ctx).items():
+                _insert(con, table, list(rows))
+        con.execute("CREATE TABLE catalog_meta (registry_head VARCHAR)")
+        con.execute("INSERT INTO catalog_meta VALUES (?)", [registry.head(ctx.registry)])
+        con.close()
+        tmp.replace(db)
     _log.debug("catalog rebuilt at %s", db)
     return db
 

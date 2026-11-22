@@ -17,6 +17,7 @@ from prov.core import layout
 from prov.core.errors import AliasError
 from prov.core.ids import kind_of
 from prov.storage import registry
+from prov.storage.lock import RegistryLock
 
 KINDS = {"ds": "dataset", "model": "checkpoint", "bench": "benchmark", "calib": "calibration",
          "ses": "session", "res": "result", "fig": "figure"}
@@ -48,6 +49,16 @@ def versions(ctx, kind: str, name: str) -> dict[str, str]:
 
 
 def set_version(ctx, ref: str, id_: str) -> None:
+    with RegistryLock(ctx.registry):
+        _set_version(ctx, ref, id_)
+
+
+def set_label(ctx, ref: str, target: str) -> None:
+    with RegistryLock(ctx.registry):
+        _set_label(ctx, ref, target)
+
+
+def _set_version(ctx, ref: str, id_: str) -> None:
     kind, name, version, _ = parse(ref)
     if version is None:
         raise AliasError(f"{ref} is a label; set a version with kind:name/version")
@@ -64,7 +75,7 @@ def set_version(ctx, ref: str, id_: str) -> None:
     _save(reg, kind, name, data, f"alias {ref} -> {id_}")
 
 
-def set_label(ctx, ref: str, target: str) -> None:
+def _set_label(ctx, ref: str, target: str) -> None:
     kind, name, _, label = parse(ref)
     tkind, tname, tversion, _ = parse(target)
     if label is None or tversion is None or (kind, name) != (tkind, tname):
