@@ -100,7 +100,7 @@ ds = prov.load(args.dataset)                    # resolves the alias; recorded a
 sessions = prov.dataset_sessions(ds.id)         # {ses_id: [episode_index, ...]}
 data = MultiLeRobotDataset(repo_ids=list(sessions), root=prov.context().store_root / "sessions",
                            episodes=sessions)
-run = prov.wandb_init()                         # optional; W&B project = prov project
+wandb.init(config={**cfg, **prov.refs()})       # any tool: carry the run's prov IDs in its config
 ...
 prov.publish(ckpt_dir, "checkpoint", meta={"step": step}, alias="model:cube-pick/1")   # an output
 prov.summary(final_loss=loss)
@@ -314,7 +314,7 @@ nothing is recorded as an input or output.
 | `prov.members(ref)` | a dataset version's episode IDs, sorted | — |
 | `prov.dataset_sessions(ref)` | `{ses_id: [episode_index, ...]}` for `MultiLeRobotDataset` | — |
 | `prov.summary(**values)` | `None`; numbers or strings, later values win | stored on the run record; logs a warning outside a run |
-| `prov.wandb_init(**kwargs)` | the `wandb` run; `project` defaults to the prov project, `config["prov"]` holds the run ID | W&B run path stored on the record |
+| `prov.refs()` | `{"prov_run", "prov_project", "prov_inputs"}`: the run's IDs, for any tool's config or metadata | required; `RunError` outside a run |
 | `prov.context()` | the `Context` (paths from the machine config, the current run) for calling library modules directly | — |
 
 **Plotting**, `from prov import plot`:
@@ -326,10 +326,8 @@ nothing is recorded as an input or output.
 | `plot.to_journal(record, doc_dir)` | copies the PNG into a journal doc folder as `<fig_id>.png`; returns the copy's path |
 | `plot.CATEGORICAL`, `plot.SEQUENTIAL_BLUE`, `plot.STATUS` | the palette. Assign series in `CATEGORICAL` order, never cycled; use one y-axis per chart and a legend for two or more series. |
 
-**W&B.** After `prov.wandb_init()`, each `prov.load` and `prov.publish` also logs a W&B artifact
-reference, so W&B draws lineage. Nothing is uploaded: the artifact references the registry record
-by path. Loads made before `wandb_init` are logged when it starts. W&B errors are logged as
-warnings and never fail the run. `use_artifact` does not work in W&B offline mode.
+**Other tools (W&B, ...).** prov does not call them. Put `prov.refs()` in a tool's config, or an
+artifact's ID in its metadata, and the tool's records point back into prov (ADR 0017).
 
 ## Querying the catalog
 
@@ -337,7 +335,7 @@ The catalog has these tables. Timestamps are naive UTC; `meta` is JSON (`meta->>
 
 | Table | Columns |
 | --- | --- |
-| `runs` | `id, kind, project, started, finished, status, exit_code, host, cwd, command[], wandb, notes` |
+| `runs` | `id, kind, project, started, finished, status, exit_code, host, cwd, command[], notes` |
 | `run_code` | `run, repo, path, base, snapshot, ref, dirty, pushed` |
 | `run_inputs`, `run_outputs` | `run, artifact` |
 | `run_tags` | `run, key, value` |
@@ -436,7 +434,6 @@ Errors print as `prov: <message>` and exit with code 2. Add `-v` to see debug lo
 | `not registered episodes: [...]` | the query or file names IDs that aren't episodes; check the query's first column |
 | `warning: only N GB free on the store disk` | under 50 GB free; publishing continues, but clean up |
 | ``summary outside `prov run`; not recorded`` | `prov.summary` was called from a plain script or notebook |
-| `W&B use_artifact failed ...` | W&B is offline or unreachable; the run continues and the registry still has the record |
 
 Store files are read-only on purpose. To change an artifact, publish a new one. The catalog can
 always be deleted and rebuilt (`prov catalog rebuild`). The registry is the record: if a command

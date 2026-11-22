@@ -61,7 +61,7 @@ enforces it); each `__init__.py` says what the package owns.
 
 | Layer | Package | Owns |
 | --- | --- | --- |
-| 0 | `prov.core` | errors, IDs, registry/store layout, record base, run env contract, Context, extension types, events, logging |
+| 0 | `prov.core` | errors, IDs, registry/store layout, record base, run env contract, Context, extension types, logging |
 | 1 | `prov.storage` | registry git writes, store bytes, DuckDB catalog engine |
 | 2 | `prov.runs` | run records, code snapshots, `prov run` lifecycle, rerun, run tables |
 | 2 | `prov.artifacts` | artifact records, publish / load, aliases, artifact tables |
@@ -69,8 +69,8 @@ enforces it); each `__init__.py` says what the package owns.
 | 4 | `prov.datasets` | freeze, split, members, dataset table |
 | 5 | `prov.lineage` | trace / uses |
 | 6 | `prov.journal` | `prov init`, docs, index, lint checks (`lint/`, one rule per module), templates, skills |
-| 6 | `prov.integrations` | W&B event subscriber, plot house style, Quartz site build / serve |
-| 7 | `prov.wiring` | the built-in extensions: catalog tables, ingest formats, lint checks, subscribers |
+| 6 | `prov.integrations` | plot house style, Quartz site build / serve |
+| 7 | `prov.wiring` | the built-in extensions: catalog tables, ingest formats, lint checks |
 | 8 | `prov.api`, `prov.plot` | the public Python API (`import prov`, `from prov import plot`) |
 | 9 | `prov.cli` | the command line, one module per command group |
 
@@ -78,8 +78,8 @@ Library functions take a `Context` (`prov.context()`) first; the public API and 
 
 Extending: a new recording format is a module in `episodes/formats/` exposing an `IngestFormat`; a
 lint rule is a module in `journal/lint/` exposing a `LintCheck`; new catalog tables are a
-`CatalogTables`; a new integration subscribes to `artifact.published`, `artifact.loaded` or
-`run.summary`. Each is then one line in `wiring.py`. A CLI group is a module in `cli/` with
+`CatalogTables`. Each is then one line in `wiring.py`. Other tools integrate by reference: they
+carry prov IDs (`prov.refs()`) in their own configs; prov imports none of them (ADR 0017). A CLI group is a module in `cli/` with
 `register`, listed in `cli/main.py`.
 
 ## Variation axes
@@ -90,7 +90,6 @@ in `prov.core.extensions` and is registered in `wiring.py`:
 - recording formats (`IngestFormat`); one today: LeRobot
 - catalog tables (`CatalogTables`)
 - journal lint rules (`LintCheck`)
-- event subscribers (`artifact.published`, `artifact.loaded`, `run.summary`); one today: W&B
 - CLI command groups (`cli/`)
 
 ## Repo

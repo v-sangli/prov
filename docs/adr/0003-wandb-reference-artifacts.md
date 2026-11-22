@@ -1,6 +1,6 @@
 # 0003. W&B holds runs and curves; artifacts reach it as references to registry records
 
-Status: Accepted (2026-11-10)
+Status: Superseded by 0017
 Covers: `src/prov/integrations/wandb.py`, `src/prov/api.py` (`wandb_init`, `summary`), `src/prov/core/events.py`
 PR: https://github.com/v-sangli/prov/pull/2
 
