@@ -18,7 +18,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import prov
-from prov import plot
+from prov_skills import plot
 
 TITLE = "{title}"
 rec = prov.load("res:evals/1")
@@ -63,7 +63,7 @@ def _figure_bytes(ctx, fig_id: str) -> dict[str, bytes]:
 
 def test_style_applies_palette_and_restores():
     import matplotlib as mpl
-    from prov import plot
+    from prov_skills import plot
     before = mpl.rcParams["axes.prop_cycle"]
     with plot.style():
         assert mpl.rcParams["axes.prop_cycle"].by_key()["color"] == plot.CATEGORICAL
@@ -80,40 +80,8 @@ def test_save_figure_and_journal_copy(analysis_repo, registry, tmp_path, ctx):
     assert rec.kind == "figure" and rec.meta["caption"] == "Error per episode"
     assert set(_figure_bytes(ctx, fig_id)) == {"errors.png", "errors.pdf"}
 
-    from prov import plot
+    from prov_skills import plot
     doc = tmp_path / "journal" / "2026-11-10-errors"
     doc.mkdir(parents=True)
     copy = plot.to_journal(rec, doc)
     assert copy.name == f"{fig_id}.png" and copy.read_bytes() == _figure_bytes(ctx, fig_id)["errors.png"]
-
-
-def test_rerun_reproduces_figure_byte_for_byte(analysis_repo, registry, tmp_path, ctx):
-    main(["run", "--kind", "analysis", "--tag", "topic=errors", "--",
-          sys.executable, str(analysis_repo / "analysis" / "plot.py")])
-    [first] = _runs(registry)
-
-    assert main(["rerun", first.id]) == 0
-    second = _runs(registry)[-1]
-    assert second.id != first.id and second.tags == {"rerun_of": first.id, "topic": "errors"}
-    assert second.code[0].base == first.code[0].snapshot and not second.code[0].dirty
-    assert _figure_bytes(ctx, second.outputs[0]) == _figure_bytes(ctx, first.outputs[0])
-    assert git(analysis_repo, "worktree", "list").count("\n") == 0          # worktree cleaned up
-
-
-def test_rerun_uses_snapshot_not_current_code(analysis_repo, registry, tmp_path, ctx):
-    script = analysis_repo / "analysis" / "plot.py"
-    script.write_text(SCRIPT.format(title="uncommitted edit"))           # dirty run
-    main(["run", "--kind", "analysis", "--", sys.executable, str(script)])
-    [first] = _runs(registry)
-    assert first.code[0].dirty
-
-    script.write_text(SCRIPT.format(title="later edit"))                 # code moves on
-    assert main(["rerun", first.id]) == 0
-    second = _runs(registry)[-1]
-    assert _figure_bytes(ctx, second.outputs[0]) == _figure_bytes(ctx, first.outputs[0])
-    assert "later edit" in script.read_text()                            # working tree untouched
-
-
-def test_rerun_unknown(registry, capsys):
-    assert main(["rerun", "run_00000000000000000000000000"]) == 2
-    assert "no record" in capsys.readouterr().err

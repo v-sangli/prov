@@ -1,6 +1,6 @@
-"""House style and figure publishing. Scripts use the `prov.plot` façade, which passes the Context.
+"""The plot skill's code: house style and figure publishing (SKILL.md beside it says how to use it).
 
-    from prov import plot
+    from prov_skills import plot
     with plot.style():
         fig, ax = plt.subplots()
         ...
@@ -24,6 +24,7 @@ from typing import Any
 
 from prov.artifacts import publish
 from prov.artifacts.schema import ArtifactRecord
+from prov.wiring import context
 
 CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
 SEQUENTIAL_BLUE = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
@@ -56,7 +57,7 @@ def style():
         yield
 
 
-def save_figure(ctx, fig, name: str, caption: str | None = None, alias: str | None = None,
+def save_figure(fig, name: str, caption: str | None = None, alias: str | None = None,
                 meta: dict[str, Any] | None = None) -> ArtifactRecord:
     """Write `name`.png and `name`.pdf, publish them as one figure artifact, return its record.
     Inside `prov run` the figure becomes the run's output."""
@@ -65,14 +66,14 @@ def save_figure(ctx, fig, name: str, caption: str | None = None, alias: str | No
         folder.mkdir()
         for ext in ("png", "pdf"):
             fig.savefig(folder / f"{name}.{ext}", metadata=_METADATA[ext])
-        return publish.publish(ctx, folder, "figure", alias=alias,
+        return publish.publish(context(), folder, "figure", alias=alias,
                                meta={"name": name, "caption": caption, "files": [f"{name}.png", f"{name}.pdf"],
                                      **(meta or {})})
 
 
-def to_journal(ctx, record: ArtifactRecord, doc_dir: Path) -> Path:
+def to_journal(record: ArtifactRecord, doc_dir: Path) -> Path:
     """Copy the figure's PNG into a journal doc folder as <fig_id>.png; returns the copy."""
-    src = publish.path(ctx, record) / f"{record.meta['name']}.png"
+    src = publish.path(context(), record) / f"{record.meta['name']}.png"
     dest = Path(doc_dir) / f"{record.id}.png"
     shutil.copyfile(src, dest)
     return dest
