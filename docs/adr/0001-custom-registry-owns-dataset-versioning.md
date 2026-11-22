@@ -1,7 +1,7 @@
 # 0001. A custom registry, not DVC or MLflow, owns records and dataset versions
 
 Status: Accepted (2026-11-09)
-Covers: `src/prov/core/layout.py`, `src/prov/storage/registry.py`, `src/prov/datasets/`
+Covers: `packages/prov/src/prov/core/layout.py`, `packages/prov/src/prov/storage/registry.py`, `packages/prov/src/prov/datasets/`
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -59,10 +59,10 @@ Not built: registry `blobs/` (copies of small results), and materialised dataset
 - Rules out DVC and MLflow as dataset or model registries.
 
 ## Enforced by
-- `tests/test_datasets.py::test_freeze_numbers_versions_and_old_versions_stay`
-- `tests/test_datasets.py::test_freeze_rejects_bad_selection`
-- `tests/test_datasets.py::test_split_by_episode`
-- `tests/test_datasets.py::test_split_by_session`
-- `tests/test_datasets.py::test_dataset_sessions_for_lerobot`
-- `tests/test_store.py::test_publish_moves_folder_under_its_id` (record committed, registry clean)
+- `packages/prov/tests/test_datasets.py::test_freeze_numbers_versions_and_old_versions_stay`
+- `packages/prov/tests/test_datasets.py::test_freeze_rejects_bad_selection`
+- `packages/prov/tests/test_datasets.py::test_split_by_episode`
+- `packages/prov/tests/test_datasets.py::test_split_by_session`
+- `packages/prov/tests/test_datasets.py::test_dataset_sessions_for_lerobot`
+- `packages/prov/tests/test_store.py::test_publish_moves_folder_under_its_id` (record committed, registry clean)
 - Not using DVC or MLflow: nothing mechanical; the user's review.

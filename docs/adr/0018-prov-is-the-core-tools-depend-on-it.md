@@ -1,6 +1,6 @@
 # 0018. prov is the core; prov-journal and prov-skills depend on it
 
-Status: Proposed (2026-11-21)
+Status: Accepted (2026-11-21)
 Covers: `pyproject.toml`, `conftest.py`, `packages/prov/`, `packages/prov-journal/`, `packages/prov-skills/`
 PR: pending (spec and plan 60ad085)
 

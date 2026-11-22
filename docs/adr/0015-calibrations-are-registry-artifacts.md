@@ -1,7 +1,7 @@
 # 0015. Calibrations and robot config files are registry artifacts; episodes reference the calibration they were recorded with
 
 Status: Accepted (2026-11-10)
-Covers: `src/prov/core/ids.py` (`calib_`), `src/prov/core/layout.py` (`calibrations/`), `src/prov/artifacts/aliases.py` (`calib:`), `src/prov/episodes/ingest.py` (`calibrations`)
+Covers: `packages/prov/src/prov/core/ids.py` (`calib_`), `packages/prov/src/prov/core/layout.py` (`calibrations/`), `packages/prov/src/prov/artifacts/aliases.py` (`calib:`), `packages/prov/src/prov/episodes/ingest.py` (`calibrations`)
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -32,6 +32,6 @@ D17.
 - Rules out referencing calibrations by file path.
 
 ## Enforced by
-- `tests/test_ids.py::test_calibration_kind`
-- `tests/test_episodes.py::test_calibrations`
-- `tests/test_datasets.py::test_publish_alias_checked_before_moving` (`calib:wrist/1`)
+- `packages/prov/tests/test_ids.py::test_calibration_kind`
+- `packages/prov/tests/test_episodes.py::test_calibrations`
+- `packages/prov/tests/test_datasets.py::test_publish_alias_checked_before_moving` (`calib:wrist/1`)

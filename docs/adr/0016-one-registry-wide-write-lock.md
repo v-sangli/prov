@@ -1,7 +1,7 @@
 # 0016. One registry-wide lock serializes every registry write
 
 Status: Accepted (2026-11-21); amended by 0017 (W&B removed)
-Covers: `src/prov/storage/lock.py`, `src/prov/core/layout.py`, `src/prov/artifacts/publish.py`, `src/prov/artifacts/aliases.py`, `src/prov/datasets/freeze.py`, `src/prov/episodes/ingest.py`, `src/prov/episodes/annotate.py`, `src/prov/runs/records.py`, `src/prov/storage/catalog.py`
+Covers: `packages/prov/src/prov/storage/lock.py`, `packages/prov/src/prov/core/layout.py`, `packages/prov/src/prov/artifacts/publish.py`, `packages/prov/src/prov/artifacts/aliases.py`, `packages/prov/src/prov/datasets/freeze.py`, `packages/prov/src/prov/episodes/ingest.py`, `packages/prov/src/prov/episodes/annotate.py`, `packages/prov/src/prov/runs/records.py`, `packages/prov/src/prov/storage/catalog.py`
 PR: https://github.com/v-sangli/prov/pull/3 (spec f0dd585, plan d78538a)
 
 ## Context
@@ -52,7 +52,7 @@ them:
 
 ## Enforced by
 
-- `tests/test_lock.py::test_nested_acquire_fails_loudly`
-- `tests/test_lock.py::test_lock_excludes_other_processes_and_dies_with_its_holder`
-- `tests/test_lock.py::test_concurrent_publishes_all_commit`
-- `tests/test_lock.py::test_concurrent_freezes_number_versions_without_orphans`
+- `packages/prov/tests/test_lock.py::test_nested_acquire_fails_loudly`
+- `packages/prov/tests/test_lock.py::test_lock_excludes_other_processes_and_dies_with_its_holder`
+- `packages/prov/tests/test_lock.py::test_concurrent_publishes_all_commit`
+- `packages/prov/tests/test_lock.py::test_concurrent_freezes_number_versions_without_orphans`

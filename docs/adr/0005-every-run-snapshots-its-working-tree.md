@@ -1,7 +1,7 @@
 # 0005. Uncommitted code is allowed; every run snapshots each repo's working tree under `refs/prov/<run_id>`
 
 Status: Accepted (2026-11-09)
-Covers: `src/prov/runs/snapshot.py`, `src/prov/runs/wrapper.py`, `src/prov/runs/rerun.py`, `src/prov/core/context.py` (`prov.toml` `repos`)
+Covers: `packages/prov/src/prov/runs/snapshot.py`, `packages/prov/src/prov/runs/wrapper.py`, `packages/prov/src/prov/runs/rerun.py`, `packages/prov/src/prov/core/context.py` (`prov.toml` `repos`)
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -39,11 +39,11 @@ be ignored; recording only HEAD loses the code that ran. Formerly design decisio
 - Rules out refusing dirty runs.
 
 ## Enforced by
-- `tests/test_gitsnap.py::test_clean_repo`
-- `tests/test_gitsnap.py::test_dirty_repo_diff_is_exactly_the_changes`
-- `tests/test_gitsnap.py::test_ref_reaches_remote`, `::test_no_remote_still_snapshots`
-- `tests/test_gitsnap.py::test_big_untracked_file_is_listed_not_stored`
-- `tests/test_gitsnap.py::test_snapshot_from_subdirectory`, `::test_repo_without_commits`
-- `tests/test_run.py::test_dirty_run_records_snapshot`, `::test_multiple_repos`
-- `tests/test_plot_rerun.py::test_rerun_uses_snapshot_not_current_code`
-- `tests/test_plot_rerun.py::test_rerun_reproduces_figure_byte_for_byte`
+- `packages/prov/tests/test_gitsnap.py::test_clean_repo`
+- `packages/prov/tests/test_gitsnap.py::test_dirty_repo_diff_is_exactly_the_changes`
+- `packages/prov/tests/test_gitsnap.py::test_ref_reaches_remote`, `::test_no_remote_still_snapshots`
+- `packages/prov/tests/test_gitsnap.py::test_big_untracked_file_is_listed_not_stored`
+- `packages/prov/tests/test_gitsnap.py::test_snapshot_from_subdirectory`, `::test_repo_without_commits`
+- `packages/prov/tests/test_run.py::test_dirty_run_records_snapshot`, `::test_multiple_repos`
+- `packages/prov/tests/test_rerun.py::test_rerun_uses_snapshot_not_current_code`
+- `packages/prov/tests/test_rerun.py::test_rerun_reproduces_file_byte_for_byte`

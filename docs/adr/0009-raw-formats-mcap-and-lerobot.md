@@ -1,7 +1,7 @@
 # 0009. Raw formats are MCAP (exported to LeRobot) and LeRobot written directly by teleop
 
 Status: Accepted (2026-11-10)
-Covers: `src/prov/episodes/`, `src/prov/cli/episodes.py`, `src/prov/core/extensions.py` (`IngestFormat`)
+Covers: `packages/prov/src/prov/episodes/`, `packages/prov/src/prov/cli/episodes.py`, `packages/prov/src/prov/core/extensions.py` (`IngestFormat`)
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -39,10 +39,10 @@ Episodes record no capture metadata beyond the fields above.
 - Rules out training directly from MCAP.
 
 ## Enforced by
-- `tests/test_episodes.py::test_ingest_v3_session`, `::test_ingest_v2_session`
-- `tests/test_episodes.py::test_source_map_references_mcap`
-- `tests/test_episodes.py::test_incomplete_source_map_moves_nothing`
-- `tests/test_episodes.py::test_not_lerobot_moves_nothing`
-- `tests/test_episodes.py::test_reingest_is_a_noop`
-- `tests/test_episodes.py::test_annotations_latest_wins`, `::test_cli_ingest_annotate_q`
-- `tests/test_extensions.py::test_new_ingest_format`
+- `packages/prov/tests/test_episodes.py::test_ingest_v3_session`, `::test_ingest_v2_session`
+- `packages/prov/tests/test_episodes.py::test_source_map_references_mcap`
+- `packages/prov/tests/test_episodes.py::test_incomplete_source_map_moves_nothing`
+- `packages/prov/tests/test_episodes.py::test_not_lerobot_moves_nothing`
+- `packages/prov/tests/test_episodes.py::test_reingest_is_a_noop`
+- `packages/prov/tests/test_episodes.py::test_annotations_latest_wins`, `::test_cli_ingest_annotate_q`
+- `packages/prov/tests/test_extensions.py::test_new_ingest_format`

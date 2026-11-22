@@ -1,7 +1,7 @@
 # 0012. The store lives at `~/store` on the main NVMe; its root is a config value and records use `store://` URIs
 
 Status: Accepted (2026-11-09)
-Covers: `src/prov/storage/store.py`, `src/prov/core/layout.py` (`KIND_DIRS`), `src/prov/core/context.py` (`store_root`)
+Covers: `packages/prov/src/prov/storage/store.py`, `packages/prov/src/prov/core/layout.py` (`KIND_DIRS`), `packages/prov/src/prov/core/context.py` (`store_root`)
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -39,8 +39,8 @@ Not built: a managed `scratch/` folder; nothing in prov creates or reads it.
 - Rules out absolute paths in records.
 
 ## Enforced by
-- `tests/test_store.py::test_publish_moves_folder_under_its_id` (`uri == store://sessions/<id>`)
-- `tests/test_store.py::test_publish_single_file` (`store://figures/<id>/closure.png`)
-- `tests/test_store.py::test_unpublishable_kinds`
-- `tests/test_store.py::test_cli_publish_and_show` (resolved path under `store_root`)
+- `packages/prov/tests/test_store.py::test_publish_moves_folder_under_its_id` (`uri == store://sessions/<id>`)
+- `packages/prov/tests/test_store.py::test_publish_single_file` (`store://figures/<id>/closure.png`)
+- `packages/prov/tests/test_store.py::test_unpublishable_kinds`
+- `packages/prov/tests/test_store.py::test_cli_publish_and_show` (resolved path under `store_root`)
 - Free-space warning: no test.

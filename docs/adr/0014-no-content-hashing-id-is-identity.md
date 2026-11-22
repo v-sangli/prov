@@ -1,7 +1,7 @@
 # 0014. No content hashing: the ID assigned at creation is the identity, and read-only folders keep artifacts from changing
 
 Status: Accepted (2026-11-10); amended by 0017 (W&B removed)
-Covers: `src/prov/artifacts/publish.py`, `src/prov/storage/store.py` (`make_read_only`), `src/prov/episodes/ingest.py`
+Covers: `packages/prov/src/prov/artifacts/publish.py`, `packages/prov/src/prov/storage/store.py` (`make_read_only`), `packages/prov/src/prov/episodes/ingest.py`
 PR: https://github.com/v-sangli/prov/pull/2
 
 ## Context
@@ -31,8 +31,8 @@ traced back to its recording. Formerly design decision D14.
 - Rules out content-addressed storage and deduplication.
 
 ## Enforced by
-- `tests/test_store.py::test_published_folder_is_read_only`
-- `tests/test_store.py::test_path_already_in_store`
-- `tests/test_episodes.py::test_reingest_is_a_noop`
-- `tests/test_episodes.py::test_source_map_references_mcap`
+- `packages/prov/tests/test_store.py::test_published_folder_is_read_only`
+- `packages/prov/tests/test_store.py::test_path_already_in_store`
+- `packages/prov/tests/test_episodes.py::test_reingest_is_a_noop`
+- `packages/prov/tests/test_episodes.py::test_source_map_references_mcap`
 - No content hash: nothing mechanical; the user's review.
