@@ -1,4 +1,4 @@
-"""The plot skill's code: house style and figure publishing (the plugin's skills/plot/SKILL.md says how to use it).
+"""The plot skill's code: house style and figure publishing (skills/prov-plot/SKILL.md says how to use it).
 
     from prov_skills import plot
     with plot.style():

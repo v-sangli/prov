@@ -7,7 +7,7 @@ Provenance for robot-learning research, as three packages in one uv workspace. D
 | --- | --- | --- | --- |
 | `packages/prov` | `prov` | `prov` | the core: IDs, provenance records, a local store, datasets of episodes, docs, lineage |
 | `packages/prov-journal` | `prov_journal` | `prov-journal` | the project journal: docs, lint, index, Quartz sites |
-| `packages/prov-skills` | `prov_skills` | — | the `prov-skills` Claude Code plugin (skills `prov`, `journal`, `plot`) and the plot module |
+| `packages/prov-skills` | `prov_skills` | — | agent skills (`prov`, `prov-journal`, `prov-plot`) and the plot module |
 
 prov imports neither tool; both depend on prov (ADR 0018, `test_layers.py` enforces it).
 
@@ -16,19 +16,23 @@ the Python API, catalog tables with example queries, the journal, and troublesho
 
 ## Install on a machine (once, for every workspace)
 
-One copy per machine, shared by every workspace, pinned by a release tag:
+One clone per machine, checked out at a release tag, with its own venv; every workspace uses it.
+agent-md's `.claude-workflow/install_prov.sh <tag>` does all of this (agent-md ADR 0011):
 
 ```bash
-R=git+https://github.com/v-sangli/prov@<tag>
-uv tool install "prov @ $R#subdirectory=packages/prov"
-uv tool install "prov-journal @ $R#subdirectory=packages/prov-journal" --with "prov @ $R#subdirectory=packages/prov"
-claude plugin marketplace add v-sangli/prov
-claude plugin install prov-skills@prov --scope user
+H=~/.local/share/prov
+git clone https://github.com/v-sangli/prov "$H" && git -C "$H" checkout --detach <tag>
+uv venv "$H/.venv" --python 3.12
+uv pip install --python "$H/.venv/bin/python" "$H/packages/prov" "$H/packages/prov-journal"
+ln -s "$H/.venv/bin/prov" "$H/.venv/bin/prov-journal" ~/.local/bin/
+for d in "$H"/packages/prov-skills/skills/*/; do ln -s "${d%/}" ~/.claude/skills/; done
 ```
 
-The plugin (ADR 0021) gives every Claude Code session the `prov`, `journal` and `plot` skills,
-and at session start, inside a project, says that the project uses prov. A project whose code
-imports `prov` or `prov_skills.plot` adds them to its own environment from the same tag.
+The skills (`prov`, `prov-journal`, `prov-plot`) are plain directories at
+`packages/prov-skills/skills/<name>/` (ADR 0022). A project whose code imports `prov` (for
+`prov.refs()`, `load`, `publish`) or `prov_skills.plot` installs them into its own environment
+from the same clone: `uv pip install "$H/packages/prov"` (add `"$H/packages/prov-skills[plot]"`
+for figures).
 
 ## Development setup
 
@@ -117,9 +121,8 @@ Library functions take a `Context` (`prov.context()`) first; the public API and 
 ### prov-skills
 
 `prov_skills.plot`: the house style, `save_figure`, `to_journal` (`from prov_skills import plot`).
-The package directory is also the plugin root (ADR 0021): `.claude-plugin/plugin.json` (its
-version is the package's), `skills/<name>/SKILL.md` for `prov`, `journal` and `plot`, and
-`hooks/` (SessionStart). The repo root's `.claude-plugin/marketplace.json` lists the plugin.
+The skills are `packages/prov-skills/skills/<name>/SKILL.md` for `prov`, `prov-journal` and
+`prov-plot`, each `name` equal to its directory; installers link the directories (ADR 0022).
 
 Extending: a new recording format is a module in `prov/episodes/formats/` exposing an
 `IngestFormat`, and new catalog tables are a `CatalogTables`; each is then one line in
