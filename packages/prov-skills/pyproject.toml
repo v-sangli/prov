@@ -1,15 +1,12 @@
 [project]
 name = "prov-skills"
-version = "0.1.1"
-description = "Agent skills for prov projects: plot (house style, figures) and journal"
+version = "0.2.0"
+description = "The prov-skills Claude Code plugin (skills prov, journal, plot) and the plot module"
 requires-python = ">=3.11"
 dependencies = ["prov"]
 
 [project.optional-dependencies]
 plot = ["matplotlib>=3.8"]
-
-[project.scripts]
-prov-skills = "prov_skills.cli:main"
 
 [tool.uv.sources]
 prov = { workspace = true }

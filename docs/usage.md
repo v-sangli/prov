@@ -40,7 +40,6 @@ made; `<...>` marks values to fill in.
 cd ~/code/cube-grasp
 prov init cube-grasp            # prov.toml
 prov-journal init               # journal/ skeleton, journal/media link, .gitignore lines
-prov-skills install .           # links the plot and journal skills into .claude/skills/
 ```
 
 None of them overwrites anything. If the project's code spans several repos, list
@@ -322,7 +321,6 @@ prov-journal index             rewrites journal/INDEX.md
 prov-journal register          registers every dated doc (prov doc register); prints each ID
 prov-journal site build [<folder>] [--name NAME]
 prov-journal site serve [--host 127.0.0.1|tailscale|ADDR] [--port 8090] [--rebuild-every 300]
-prov-skills install <project>  links every skill into <project>/.claude/skills/
 ```
 
 See [The journal](#the-journal) and [Sites](#sites).
