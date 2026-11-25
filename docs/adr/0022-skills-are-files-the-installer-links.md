@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-25)
 Covers: `packages/prov-skills/skills/`, `packages/prov-skills/tests/test_skills.py`
-PR: (pending); commits `e92747c` (spec), `32b9fe0` (plan, `docs/superpowers/plans/2026-11-25-clone-install.md`), `fe5ded1`, and the docs commit
+PR: (pending); commits `e92747c` (spec), `32b9fe0` (plan, `docs/superpowers/plans/2026-11-25-clone-install.md`), `fe5ded1`, `e37d7a9`
 
 ## Context
 

@@ -1,6 +1,6 @@
 [project]
 name = "prov-journal"
-version = "0.2.1"
+version = "0.2.2"
 description = "The prov project journal: docs, lint, index and Quartz sites"
 requires-python = ">=3.11"
 dependencies = ["prov", "pyyaml>=6"]
