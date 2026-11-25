@@ -1,8 +1,8 @@
-"""prov-skills: agent skills for projects that use prov. Imports prov; prov never imports this package.
+"""prov-skills: the plot module, for projects that use prov. Imports prov; prov never imports this package.
 
-One directory per skill, each holding a SKILL.md; adding one touches nothing else.
+plot/   house style, save_figure, to_journal (`from prov_skills import plot`)
 
-plot/      the plot skill and its code: house style, save_figure, to_journal (`from prov_skills import plot`)
-journal/   the journal skill
-cli        `prov-skills install <project>`: links every skill into <project>/.claude/skills/
+The package directory is also the root of the `prov-skills` Claude Code plugin (ADR 0021):
+`.claude-plugin/plugin.json`, `skills/<name>/SKILL.md` (one directory per skill; adding one
+touches nothing else) and `hooks/`.
 """
