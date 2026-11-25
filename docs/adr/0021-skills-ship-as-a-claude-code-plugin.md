@@ -1,7 +1,8 @@
 # 0021. Skills ship as a Claude Code plugin, installed once per machine
 
-Status: Proposed
+Status: Accepted (2026-11-24)
 Covers: `.claude-plugin/`, `packages/prov-skills/`
+PR: (pending); commits `cc5cd5f` (spec), `5d08052` (plan, `docs/superpowers/plans/2026-11-24-skills-plugin.md`), `bdb5caf`, `9da2836`, `4f9a2d6`, `2b6e4c8`
 
 ## Context
 
