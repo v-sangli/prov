@@ -21,7 +21,7 @@ milestones, written by people and agents.
    findings rest on (`run_01J...`, `model:cube/0.4`, `bench:cube-holdout/2`). Recordings and
    checkpoints are never copied in. `prov-journal lint` fails on IDs that don't resolve.
 5. **Figures come from `prov run`.** A figure in a doc is made by a committed script in
-   `analysis/` (plot skill) and copied in with `prov_skills.plot.to_journal`, named `<fig_id>.png`,
+   `analysis/` (`prov-plot` skill) and copied in with `prov_skills.plot.to_journal`, named `<fig_id>.png`,
    with the ID in its caption. Throwaway plots stay out.
 6. **Keep files small.** PNG for plots, JPEG for photos, about 500 KB each. Videos are embedded
    from `media/` (a link into the store, not committed) with `![[media/<run_id>/<file>.mp4]]`

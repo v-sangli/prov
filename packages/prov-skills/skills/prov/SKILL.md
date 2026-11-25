@@ -43,10 +43,10 @@ resolved the same way.
 
 - A finding, doc, figure caption or PR description cites IDs or aliases, never store paths or
   local file names.
-- Docs: journal docs follow the `journal` skill; `prov-journal register` at the end of the
+- Docs: journal docs follow the `prov-journal` skill; `prov-journal register` at the end of the
   session. Any other Markdown doc in a git repo: `prov doc register <path>`. A loose note in no
   repo is folded into a journal doc first.
-- Figures: the `plot` skill.
+- Figures: the `prov-plot` skill.
 
 ## Don'ts
 

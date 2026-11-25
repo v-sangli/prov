@@ -1,6 +1,0 @@
-{
-  "name": "prov-skills",
-  "version": "0.2.0",
-  "description": "Skills for projects that use prov: resolving and citing IDs, the journal, figures",
-  "author": {"name": "v-sangli"}
-}

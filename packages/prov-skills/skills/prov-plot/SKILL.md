@@ -1,5 +1,5 @@
 ---
-name: plot
+name: prov-plot
 description: Use when making any figure from experiment results (eval numbers, benchmark logs, training curves exported for a doc) in a project that uses prov. Covers loading inputs by ID, the house style, publishing with save_figure, and embedding in the journal.
 ---
 

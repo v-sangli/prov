@@ -1,7 +1,7 @@
 [project]
 name = "prov-skills"
-version = "0.2.0"
-description = "The prov-skills Claude Code plugin (skills prov, journal, plot) and the plot module"
+version = "0.3.0"
+description = "Agent skills for prov (prov, prov-journal, prov-plot) and the plot module"
 requires-python = ">=3.11"
 dependencies = ["prov"]
 

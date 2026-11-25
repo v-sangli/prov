@@ -1,5 +1,5 @@
 ---
-name: journal
+name: prov-journal
 description: Use when recording experiments, findings, investigations, plans or decisions in a project that uses prov, or when reading what was tried before. Covers the journal layout, doc rules, evidence by ID, and prov-journal new / lint / index / register.
 ---
 
@@ -18,7 +18,7 @@ concluded. Read `journal/NOW.md` before starting work; the rules are in `journal
 3. `evidence:` in the frontmatter lists the IDs or aliases the findings rest on: runs, datasets,
    models, results, figures, episodes. Find them with `prov q`, `prov show`, `prov trace`.
    Never paths.
-4. Figures: plot skill, then `prov_skills.plot.to_journal(rec, doc_dir)`; caption carries the ID.
+4. Figures: the `prov-plot` skill, then `prov_skills.plot.to_journal(rec, doc_dir)`; caption carries the ID.
 5. `prov-journal lint` must pass before you finish. Then `prov-journal index`.
 6. If the doc changes the big picture, update `journal/NOW.md` (one line per thread).
 7. At the end of the session, `prov-journal register`: it records every dated doc and what it

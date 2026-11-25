@@ -2,7 +2,6 @@
 
 plot/   house style, save_figure, to_journal (`from prov_skills import plot`)
 
-The package directory is also the root of the `prov-skills` Claude Code plugin (ADR 0021):
-`.claude-plugin/plugin.json`, `skills/<name>/SKILL.md` (one directory per skill; adding one
-touches nothing else) and `hooks/`.
+The agent skills live beside the package, in `skills/<name>/SKILL.md` (`prov`, `prov-journal`,
+`prov-plot`); an installer links each directory into `~/.claude/skills/` (ADR 0022).
 """

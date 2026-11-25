@@ -1,6 +1,6 @@
 # 0018. prov is the core; prov-journal and prov-skills depend on it
 
-Status: Accepted (2026-11-21); prov-skills' installer replaced by 0021 (plugin)
+Status: Accepted (2026-11-21); prov-skills' installer replaced by 0021, then 0022 (the harness links the skills)
 Covers: `pyproject.toml`, `conftest.py`, `packages/prov/`, `packages/prov-journal/`, `packages/prov-skills/`
 PR: https://github.com/v-sangli/prov/pull/5 (spec and plan 60ad085)
 

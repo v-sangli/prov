@@ -1,6 +1,6 @@
 # 0007. Plotting is our own module, `prov.plot`; figures4papers ideas only, no code copied
 
-Status: Accepted (2026-11-10); amended by 0018 (moved) and 0021 (the skill ships in the plugin)
+Status: Accepted (2026-11-10); amended by 0018 (moved), 0021 and 0022 (the skill is `prov-plot`, linked by the installer)
 Covers: `packages/prov-skills/src/prov_skills/plot/`, `packages/prov-skills/src/prov_skills/plot/`, `packages/prov-skills/src/prov_skills/plot/`
 PR: https://github.com/v-sangli/prov/pull/2
 
