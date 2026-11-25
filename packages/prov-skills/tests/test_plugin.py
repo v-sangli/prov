@@ -1,6 +1,7 @@
 """The plugin (ADR 0021): manifests, skills, and the SessionStart hook."""
 
 import json
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -30,3 +31,28 @@ def test_every_skill_names_its_directory():
     assert set(skills) == {"prov", "journal", "plot"}
     for name, skill_md in skills.items():
         assert frontmatter_name(skill_md) == name
+
+
+def run_hook(cwd: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(["bash", str(PLUGIN / "hooks" / "session_start.sh")], cwd=cwd,
+                          capture_output=True, text=True, check=True)
+
+
+def test_hook_is_registered():
+    hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text())["hooks"]
+    [entry] = hooks["SessionStart"]
+    assert entry["hooks"] == [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session_start.sh"}]
+
+
+def test_hook_speaks_inside_a_prov_project(tmp_path):
+    (tmp_path / "prov.toml").write_text('project = "demo"\n')
+    (tmp_path / "journal").mkdir()
+    (tmp_path / "journal" / "NOW.md").write_text("# Now\n")
+    (tmp_path / "src" / "deep").mkdir(parents=True)
+    out = run_hook(tmp_path / "src" / "deep").stdout
+    assert f"prov.toml at {tmp_path}" in out
+    assert f"{tmp_path}/journal/NOW.md" in out
+
+
+def test_hook_is_silent_outside_one(tmp_path):
+    assert run_hook(tmp_path).stdout == ""
