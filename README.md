@@ -7,14 +7,30 @@ Provenance for robot-learning research, as three packages in one uv workspace. D
 | --- | --- | --- | --- |
 | `packages/prov` | `prov` | `prov` | the core: IDs, provenance records, a local store, datasets of episodes, docs, lineage |
 | `packages/prov-journal` | `prov_journal` | `prov-journal` | the project journal: docs, lint, index, Quartz sites |
-| `packages/prov-skills` | `prov_skills` | `prov-skills` | agent skills: `plot` (house style, figures) and `journal` |
+| `packages/prov-skills` | `prov_skills` | — | the `prov-skills` Claude Code plugin (skills `prov`, `journal`, `plot`) and the plot module |
 
 prov imports neither tool; both depend on prov (ADR 0018, `test_layers.py` enforces it).
 
 **Using it: [docs/usage.md](docs/usage.md)**: concepts, a start-to-finish workflow, every command,
 the Python API, catalog tables with example queries, the journal, and troubleshooting.
 
-## Setup (once per machine)
+## Install on a machine (once, for every workspace)
+
+One copy per machine, shared by every workspace, pinned by a release tag:
+
+```bash
+R=git+https://github.com/v-sangli/prov@<tag>
+uv tool install "prov @ $R#subdirectory=packages/prov"
+uv tool install "prov-journal @ $R#subdirectory=packages/prov-journal" --with "prov @ $R#subdirectory=packages/prov"
+claude plugin marketplace add v-sangli/prov
+claude plugin install prov-skills@prov --scope user
+```
+
+The plugin (ADR 0021) gives every Claude Code session the `prov`, `journal` and `plot` skills,
+and at session start, inside a project, says that the project uses prov. A project whose code
+imports `prov` or `prov_skills.plot` adds them to its own environment from the same tag.
+
+## Development setup
 
 ```bash
 uv venv .venv --python 3.12
@@ -57,14 +73,12 @@ into the checkout before building (no analytics, local fonts, `media/` ignored).
 cd <project repo>
 prov init <project-name>      # prov.toml
 prov-journal init             # journal/, journal/media link, .gitignore lines
-prov-skills install .         # .claude/skills/{plot,journal}
 prov run --kind train -- python train.py
 prov-journal new <topic>; prov-journal lint; prov-journal index; prov-journal register
 prov-journal site build && prov-journal site serve
 ```
 
-`prov --help` and `prov <command> --help` list everything (likewise `prov-journal` and
-`prov-skills`); `prov -v ...` and `prov-journal -v ...` log debug detail, `-q` only warnings.
+`prov --help` and `prov <command> --help` list everything (likewise `prov-journal`); `prov -v ...` and `prov-journal -v ...` log debug detail, `-q` only warnings.
 
 ## Package map
 
@@ -102,15 +116,16 @@ Library functions take a `Context` (`prov.context()`) first; the public API and 
 
 ### prov-skills
 
-One directory per skill, each holding its SKILL.md: `prov_skills/plot/` (with the house style,
-`save_figure`, `to_journal`: `from prov_skills import plot`) and `prov_skills/journal/`.
-`prov_skills.cli` is `prov-skills install <project>`.
+`prov_skills.plot`: the house style, `save_figure`, `to_journal` (`from prov_skills import plot`).
+The package directory is also the plugin root (ADR 0021): `.claude-plugin/plugin.json` (its
+version is the package's), `skills/<name>/SKILL.md` for `prov`, `journal` and `plot`, and
+`hooks/` (SessionStart). The repo root's `.claude-plugin/marketplace.json` lists the plugin.
 
 Extending: a new recording format is a module in `prov/episodes/formats/` exposing an
 `IngestFormat`, and new catalog tables are a `CatalogTables`; each is then one line in
 `prov/wiring.py`. A CLI group is a module in `prov/cli/` with `register`, listed in
 `cli/main.py`. A lint rule is a module in `prov_journal/lint/` exposing a `LintCheck`, listed in
-`CHECKS`. A skill is a directory under `prov_skills/` with a SKILL.md. Other tools integrate by
+`CHECKS`. A skill is a directory under `packages/prov-skills/skills/` with a SKILL.md. Other tools integrate by
 reference: they carry prov IDs (`prov.refs()`) in their own configs; prov imports none of them
 (ADR 0017).
 

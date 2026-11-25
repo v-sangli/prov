@@ -1,7 +1,7 @@
 # 0019. Docs are lineage nodes; lineage walks one edges view
 
 Status: Accepted (2026-11-21)
-Covers: `packages/prov/src/prov/docs/`, `packages/prov/src/prov/lineage/graph.py`, `packages/prov/src/prov/storage/catalog.py`, `packages/prov/src/prov/core/extensions.py`, the `tables.py` of runs, artifacts, episodes and datasets, `packages/prov/src/prov/cli/docs.py`, `packages/prov-journal/src/prov_journal/`, `packages/prov-skills/src/prov_skills/journal/SKILL.md`
+Covers: `packages/prov/src/prov/docs/`, `packages/prov/src/prov/lineage/graph.py`, `packages/prov/src/prov/storage/catalog.py`, `packages/prov/src/prov/core/extensions.py`, the `tables.py` of runs, artifacts, episodes and datasets, `packages/prov/src/prov/cli/docs.py`, `packages/prov-journal/src/prov_journal/`, `packages/prov-skills/skills/journal/SKILL.md`
 PR: https://github.com/v-sangli/prov/pull/6 (spec and plan 424357b)
 
 ## Context
