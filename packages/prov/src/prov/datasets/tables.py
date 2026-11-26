@@ -19,9 +19,11 @@ SELECT DISTINCT e.session, 'member', m.dataset FROM dataset_members m JOIN episo
 
 
 def rows(ctx) -> dict[str, list[tuple]]:
+    """One row per line of every members file; a files dataset has none (ADR 0023)."""
+    alias = {a.id: a.meta.get("alias") for a in all_artifacts(ctx, "dataset")}
     return {"dataset_members": [
-        (a.id, a.meta.get("alias"), e) for a in all_artifacts(ctx, "dataset")
-        for e in (ctx.registry / layout.dataset_members(a.id)).read_text().split()]}
+        (f.stem, alias[f.stem], e) for f in sorted((ctx.registry / layout.DATASETS_DIR).glob("*.txt"))
+        for e in f.read_text().split()]}
 
 
 TABLES = CatalogTables("datasets", DDL, rows, edges=EDGES)
