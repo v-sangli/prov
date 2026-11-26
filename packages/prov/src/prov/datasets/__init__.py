@@ -1,4 +1,5 @@
-"""Layer 4: dataset versions, frozen lists of episode IDs (no bytes copied).
+"""Layer 4: episode selections, the dataset versions that are frozen lists of episode IDs (no bytes
+copied). A dataset version with files is published like any artifact (ADR 0023).
 Imports core, storage, artifacts, episodes (below it).
 
 members   member episodes of a version; {ses_id: [episode_index]} for LeRobot loading

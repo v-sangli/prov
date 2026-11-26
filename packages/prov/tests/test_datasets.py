@@ -13,6 +13,7 @@ from prov.datasets.freeze import freeze
 from prov.datasets.members import dataset_sessions, members
 from prov.episodes.annotate import annotate
 from prov.episodes.ingest import ingest
+from prov.lineage import graph as lineage
 from prov.runs.schema import RunRecord
 from test_episodes import make_lerobot
 
@@ -207,3 +208,60 @@ def test_cli_dataset_and_alias(registry, tmp_path, capsys, ctx):
     shown = capsys.readouterr().out
     assert "role: all" in shown and "# path" not in shown
     assert main(["alias", "set", "ds:cube/1", ids[0]]) == 2
+
+
+# files datasets (ADR 0023)
+
+def _files_dir(tmp_path: Path, name: str) -> Path:
+    d = tmp_path / name
+    d.mkdir()
+    (d / "clips.npz").write_bytes(b"clips")
+    return d
+
+
+def test_files_dataset_published_in_run_traces_to_it(repo, registry, monkeypatch, tmp_path, ctx):
+    (repo / "prov.toml").write_text('project = "demo"\n')
+    git(repo, "add", "prov.toml")
+    git(repo, "commit", "-q", "-m", "prov.toml")
+    monkeypatch.chdir(repo)
+    src = _files_dir(tmp_path, "gen")
+    code = f"import prov; prov.publish({str(src)!r}, 'dataset', alias='ds:gen/1')"
+    assert main(["run", "--kind", "other", "--", sys.executable, "-c", code]) == 0
+
+    [run] = [RunRecord.from_yaml(p) for p in (registry / "records" / "runs").glob("*.yaml")]
+    ds = aliases.resolve(ctx, "ds:gen/1")
+    assert run.outputs == [ds]
+    import prov
+    folder = prov.path(prov.load("ds:gen/1"))
+    assert folder.is_dir() and (folder / "clips.npz").read_bytes() == b"clips"
+    catalog.rebuild(ctx)
+    with catalog.connect(ctx) as con:
+        edge = con.execute("SELECT src FROM edges WHERE rel = 'produced' AND dst = ?", [ds]).fetchall()
+        n_members = con.execute("SELECT count(*) FROM dataset_members").fetchone()[0]
+    assert edge == [(run.id,)] and n_members == 0
+    nodes = lineage.trace(ctx, "ds:gen/1")
+    assert [n for _, n, _ in nodes][:2] == [ds, run.id]
+    assert nodes[0][2] == f"{ds}  ds:gen/1  dataset, files"
+
+
+def test_files_dataset_has_no_members(registry, tmp_path, ctx):
+    publish(ctx, _files_dir(tmp_path, "gen"), "dataset", alias="ds:gen/1")
+    with pytest.raises(DatasetError, match="ds:gen/1 holds files, not episodes; use prov.path"):
+        members(ctx, "ds:gen/1")
+    with pytest.raises(DatasetError, match="ds:gen/1 holds files, not episodes; use prov.path"):
+        dataset_sessions(ctx, "ds:gen/1")
+
+
+def test_selection_and_files_datasets_side_by_side(registry, tmp_path, capsys, ctx):
+    [ids] = _sessions(ctx, tmp_path, [[5, 5]])
+    sel = freeze(ctx, "cube", query=ALL)["all"].id
+    assert main(["publish", str(_files_dir(tmp_path, "gen")), "--kind", "dataset", "--alias", "ds:gen/1"]) == 0
+    files = capsys.readouterr().out.strip()
+    assert aliases.resolve(ctx, "ds:gen/1") == files
+    assert members(ctx, "ds:cube/1") == sorted(ids)
+    with catalog.connect(ctx) as con:
+        rows = con.execute("SELECT dataset, alias, episode FROM dataset_members ORDER BY episode").fetchall()
+        labels = dict(con.execute("SELECT id, label FROM nodes WHERE id IN (?, ?)", [sel, files]).fetchall())
+    assert rows == [(sel, "ds:cube/1", e) for e in sorted(ids)]
+    assert labels == {sel: f"{sel}  ds:cube/1  dataset, 2 episodes in 1 sessions",
+                      files: f"{files}  ds:gen/1  dataset, files"}

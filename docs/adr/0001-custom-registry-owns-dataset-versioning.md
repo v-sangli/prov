@@ -1,6 +1,6 @@
 # 0001. A custom registry, not DVC or MLflow, owns records and dataset versions
 
-Status: Accepted (2026-11-09)
+Status: Accepted (2026-11-09); superseded in part by 0023 (dataset versions may hold files)
 Covers: `packages/prov/src/prov/core/layout.py`, `packages/prov/src/prov/storage/registry.py`, `packages/prov/src/prov/datasets/`
 PR: https://github.com/v-sangli/prov/pull/2
 
