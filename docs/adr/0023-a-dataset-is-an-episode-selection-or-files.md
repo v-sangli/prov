@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-26); supersedes in part 0001 (its "Dataset versions" section)
 Covers: `packages/prov/src/prov/datasets/tables.py`, `packages/prov/src/prov/datasets/members.py`, `packages/prov/src/prov/artifacts/tables.py`
-PR: branch `feat/datasets-with-bytes`
+PR: https://github.com/v-sangli/prov/pull/12
 
 ## Context
 
