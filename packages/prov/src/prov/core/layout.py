@@ -7,7 +7,7 @@ registry/
     records/episodes/<ses_id>.jsonl          one EpisodeRecord per line
     records/annotations/<ses_id>.jsonl       one Annotation per line, append-only
     records/docs/<doc_id>.yaml               a doc and its versions
-    datasets/<ds_id>.txt                     member episode IDs, one per line
+    datasets/<ds_id>.txt                     member episode IDs, one per line (episode selections)
     aliases/<alias kind>/<name>.yaml         versions and labels
     .prov.lock                               the write lock (untracked)
 store/

@@ -1,4 +1,4 @@
-"""prov: IDs, provenance records, a local store and datasets of episodes.
+"""prov: IDs, provenance records, a local store and datasets (episode selections or files).
 
 Public API (inside or outside `prov run`): load, path, publish, summary, members,
 dataset_sessions, refs, context. Package map: README.md.

@@ -5,7 +5,7 @@ Provenance for robot-learning research, as three packages in one uv workspace. D
 
 | Package | Import | CLI | What it is |
 | --- | --- | --- | --- |
-| `packages/prov` | `prov` | `prov` | the core: IDs, provenance records, a local store, datasets of episodes, docs, lineage |
+| `packages/prov` | `prov` | `prov` | the core: IDs, provenance records, a local store, datasets (episode selections or files), docs, lineage |
 | `packages/prov-journal` | `prov_journal` | `prov-journal` | the project journal: docs, lint, index, Quartz sites |
 | `packages/prov-skills` | `prov_skills` | — | agent skills (`prov`, `prov-journal`, `prov-plot`) and the plot module |
 

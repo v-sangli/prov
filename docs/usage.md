@@ -22,9 +22,9 @@ episodes, datasets, checkpoints, results, figures, and the runs that made them. 
 | **Registry** | a git repo of small text records describing every run and artifact, plus episodes, annotations, dataset members and aliases. The source of truth; push it to a private remote. Every change is a commit. | `registry` (`~/registry`) |
 | **Catalog** | a DuckDB index built from the registry, for `prov q` and lineage. Rebuilt automatically when the registry has moved; deleting it loses nothing. | `catalog` (`~/.cache/prov/catalog.duckdb`) |
 | **Run** | one execution of a command under `prov run`: code snapshot, machine, inputs, outputs, summary numbers, status. | `registry/records/runs/` |
-| **Artifact** | a published file or folder with an ID: `ses_`, `ckpt_`, `res_`, `fig_`, ... A dataset version is an artifact with no bytes. | record in the registry, bytes in the store |
+| **Artifact** | a published file or folder with an ID: `ses_`, `ckpt_`, `res_`, `fig_`, ... A dataset version that selects episodes is an artifact with no bytes. | record in the registry, bytes in the store |
 | **Episode** | one episode of a session, with its own `ep_` ID, length, tasks and source. Labelled with annotations. | `registry/records/episodes/<ses_id>.jsonl` |
-| **Dataset version** | a frozen list of episode IDs, named `ds:<name>/<n>`. Nothing is copied. | `registry/datasets/<ds_id>.txt` |
+| **Dataset version** | named `ds:<name>/<n>`: an episode selection, a frozen list of episode IDs (nothing is copied), or a folder of files published as a dataset. | `registry/datasets/<ds_id>.txt`, or `store/datasets/<ds_id>/` for files |
 | **Project** | a repo with a `prov.toml`: its name and the repos to snapshot on each run. | the project repo |
 | **Journal** | dated Markdown docs in the project repo, citing IDs as evidence. | `<project>/journal/` |
 | **Doc** | a Markdown file in a git repo, registered with a `doc_` ID (its frontmatter `id:`) and the IDs it cites. Journal docs are docs. | file in its repo, record in `registry/records/docs/` |
@@ -273,6 +273,19 @@ prov dataset freeze <name> (--query SQL | --episodes FILE) [--parent REF] [--not
     session appears on both sides.
 - **Seeds.** The same seed always gives the same split.
 
+```
+prov publish <dir> --kind dataset --alias ds:<name>/<n>
+```
+
+- **Files datasets.** Data that is not a selection of episodes (generated clips, a converted
+  corpus) is published with its bytes into `store/datasets/<ds_id>/`, read-only, with no members
+  file. The version number is given in `--alias`; it is not numbered for you, and it has no
+  `-train` / `-holdout` siblings.
+- **Inside `prov run`,** its `produced_by` is the run, so `prov trace ds:<name>/<n>` reaches the
+  run that made it and that run's code. Lineage labels it `files`.
+- **Reading it:** `prov.path(prov.load("ds:<name>/<n>"))` is its folder; `prov.members` and
+  `prov.dataset_sessions` refuse it.
+
 ### Catalog and lineage
 
 ```
@@ -334,10 +347,10 @@ nothing is recorded as an input or output.
 | Call | Returns | Inside `prov run` |
 | --- | --- | --- |
 | `prov.load(ref)` | the `ArtifactRecord` for an ID or alias (`.id`, `.kind`, `.uri`, `.meta`, `.produced_by`) | recorded as an input |
-| `prov.path(record)` | the `Path` of its bytes in the store (error for a dataset, which has none) | — |
+| `prov.path(record)` | the `Path` of its bytes in the store (error for an episode selection, which has none) | — |
 | `prov.publish(path, kind, meta=None, copy=False, alias=None)` | the new `ArtifactRecord`; same rules as `prov publish` | recorded as an output, `produced_by` = run |
-| `prov.members(ref)` | a dataset version's episode IDs, sorted | — |
-| `prov.dataset_sessions(ref)` | `{ses_id: [episode_index, ...]}` for `MultiLeRobotDataset` | — |
+| `prov.members(ref)` | an episode selection's episode IDs, sorted (error for a files dataset) | — |
+| `prov.dataset_sessions(ref)` | `{ses_id: [episode_index, ...]}` of an episode selection, for `MultiLeRobotDataset` | — |
 | `prov.summary(**values)` | `None`; numbers or strings, later values win | stored on the run record; logs a warning outside a run |
 | `prov.refs()` | `{"prov_run", "prov_project", "prov_inputs"}`: the run's IDs, for any tool's config or metadata | required; `RunError` outside a run |
 | `prov.context()` | the `Context` (paths from the machine config, the current run) for calling library modules directly | — |
